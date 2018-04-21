@@ -16,11 +16,22 @@
     :clear
     :fill
     :blit
+    :border
 
     :width
-    :height))
+    :height
+
+    :*global-input-hook*
+
+    ))
+
+(defpackage :vintage.wrap
+  (:use :cl :iterate :losh :vintage.quickutils)
+  (:export
+    :word-wrap))
 
 (defpackage :vintage
-  (:use :cl :iterate :losh :vintage.quickutils)
+  (:use :cl :iterate :losh :vintage.quickutils
+    :vintage.wrap)
   (:export
     :toplevel))

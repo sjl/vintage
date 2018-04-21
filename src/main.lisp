@@ -13,6 +13,11 @@
            (for line :in-whatever lines)
            (boots:draw canvas r col line)))
 
+(defmacro wait-for-event (goal)
+  (once-only (goal)
+    `(iterate
+       (thereis (eql ,goal (boots:read-event))))))
+
 
 ;;;; Logging ------------------------------------------------------------------
 (defvar *log* nil)
@@ -47,6 +52,7 @@
 
 (define-state-machine-macros)
 
+
 ;;;; Title --------------------------------------------------------------------
 (defparameter *title*
   (read-lines "assets/title" :omit-empty t))
@@ -56,14 +62,38 @@
                      :width (length (first *title*)))
       (boots:canvas () (rcurry #'draw-lines *title*))
     (boots:blit)
-    (boots:read-event)))
+    (boots:read-event)
+    (transition intro)))
+
+
+;;;; Intro --------------------------------------------------------------------
+(defparameter *intro*
+  (read-lines "assets/intro" :omit-empty nil))
+
+(define-state intro
+  (boots:with-layer (:width 60 :height (+ 2 (length (word-wrap *intro* 58))))
+      (boots:canvas ()
+                    (lambda (c)
+                      (boots:clear c)
+                      (boots:border c)
+                      (draw-lines c (word-wrap *intro* (- (boots:width c) 2))
+                                  1 1)))
+    (boots:blit)
+    (wait-for-event #\Space)))
 
 
 ;;;; Main ---------------------------------------------------------------------
+(defun global-input-hook (event)
+  (l event)
+  (case event
+    (#\~ (boots:blit) nil)
+    (t t)))
+
 (defun run ()
   (with-logging
     (boots:with-boots
-      (title))))
+      (let ((boots:*global-input-hook* 'global-input-hook))
+        (title)))))
 
 (defun toplevel ()
   (run))

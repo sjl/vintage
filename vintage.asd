@@ -9,6 +9,7 @@
                :cl-charms
                :iterate
                :losh
+               :split-sequence
 
                )
 
@@ -21,4 +22,5 @@
    (:module "src" :serial t
     :components
     ((:file "boots")
+     (:file "wrap")
      (:file "main")))))

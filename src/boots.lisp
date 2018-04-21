@@ -305,14 +305,25 @@
     (ignore-errors (charms:write-string-at-point
                      (window canvas) s 0 row))))
 
+(defun border (canvas)
+  (charms::check-status
+    (charms/ll:wborder (charms::window-pointer (window canvas))
+                       0 0 0 0 0 0 0 0))
+  t)
+
 
 ;;;; Input --------------------------------------------------------------------
+(defvar *global-input-hook* (lambda (event)
+                              (declare (ignore event))
+                              t))
+
 (defun process-event (event)
   (case event
     (:resize (progn (set-dimensions)
                     (resize-layers)
                     (blit))))
-  event)
+  (when (and event (funcall *global-input-hook* event))
+    event))
 
 (defun read-event-no-hang ()
   (process-event (charms:get-char t :ignore-error t)))
