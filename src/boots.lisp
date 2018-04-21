@@ -29,8 +29,8 @@
 (defclass* (base :conc-name "") ()
   ((desired-height :type dimension-designator)
    (desired-width :type dimension-designator)
-   (actual-height :type dimension)
-   (actual-width :type dimension)
+   (height :type dimension)
+   (width :type dimension)
    (row :type coordinate)
    (col :type coordinate)))
 
@@ -42,9 +42,9 @@
 (defclass* (container :conc-name "") (base)
   ((contents :type sequence)))
 
-
 (defclass* (stack :conc-name "") (container) ())
 (defclass* (shelf :conc-name "") (container) ())
+
 
 (defclass* (widget :conc-name "") (base) ())
 
@@ -139,8 +139,8 @@
 (defmethod resize ((object base) row col width height)
   (setf (row object) row
         (col object) col
-        (actual-width object) width
-        (actual-height object) height))
+        (width object) width
+        (height object) height))
 
 
 (defun normalize-float (total value)
@@ -160,17 +160,30 @@
 
 
 (defun distribute-autos (total values)
-  (let ((n (count-autos values))
-        (remaining (- total (sum-fixed values))))
-    (multiple-value-bind (v extra) (floor remaining n)
-      (iterate
-        (with i = 0)
-        (for value :in values)
-        (collect (if (eq :auto value)
-                   (if (<= (incf i) extra)
-                     (1+ v)
-                     v)
-                   value))))))
+  (let ((n (count-autos values)))
+    (if (zerop n)
+      values
+      (let ((remaining (- total (sum-fixed values))))
+        (multiple-value-bind (v extra) (floor remaining n)
+          (iterate
+            (with i = 0)
+            (for value :in values)
+            (collect (if (eq :auto value)
+                       (if (<= (incf i) extra)
+                         (1+ v)
+                         v)
+                       value))))))))
+
+(defun cap-overflow (total values)
+  (let ((excess (max 0 (- (summation values) total))))
+    (if (zerop excess)
+      values
+      (flet ((cap-value (value)
+               ;; TODO: handle 0-width windows somehow
+               (let ((portion (min excess (1- value))))
+                 (decf excess portion)
+                 (- value portion))))
+        (mapcar #'cap-value values)))))
 
 (defun flush-stack (children heights row col width)
   (iterate
@@ -197,7 +210,8 @@
                (-<> (contents stack)
                  (map 'list #'desired-height <>)
                  (normalize-floats height <>)
-                 (distribute-autos height <>))
+                 (distribute-autos height <>)
+                 (cap-overflow height <>))
                row col width))
 
 (defmethod resize ((shelf shelf) row col width height)
@@ -206,7 +220,8 @@
                (-<> (contents shelf)
                  (map 'list #'desired-width <>)
                  (normalize-floats width <>)
-                 (distribute-autos width <>))
+                 (distribute-autos width <>)
+                 (cap-overflow height <>))
                row col height))
 
 (defmethod resize ((canvas canvas) row col width height)
@@ -226,8 +241,8 @@
            (w (resize-dimension (desired-width layer) *screen-width*))
            (r (truncate (- *screen-height* h) 2))
            (c (truncate (- *screen-width* w) 2)))
-      (setf (actual-height layer) h
-            (actual-width layer) w
+      (setf (height layer) h
+            (width layer) w
             (row layer) r
             (col layer) c)
       (resize (content layer) r c w h))))
@@ -236,12 +251,7 @@
   (map nil #'resize-layer *layers*))
 
 
-;;;; Main ---------------------------------------------------------------------
-(defun set-dimensions ()
-  (setf (values *screen-width* *screen-height*)
-        (charms:window-dimensions t)))
-
-
+;;;; Blitting -----------------------------------------------------------------
 (defgeneric blit% (object))
 
 (defmethod blit% ((layer layer))
@@ -258,10 +268,12 @@
   (charms:update-panels)
   (charms:update))
 
+
+;;;; Drawing ------------------------------------------------------------------
 (defun draw (canvas row col string &rest format-args)
   (nest
-    (when (< row (actual-height canvas)))
-    (let ((available-width (max 0 (- (actual-width canvas) col)))))
+    (when (< row (height canvas)))
+    (let ((available-width (max 0 (- (width canvas) col)))))
     (when (plusp available-width))
     (let* ((string (if format-args
                      (apply #'format nil string format-args)
@@ -275,25 +287,75 @@
 (defun clear (canvas)
   (charms:clear-window (window canvas)))
 
+(defun fill (char canvas)
+  (iterate
+    (with s = (make-string (width canvas) :initial-element char))
+    (for row :from 0)
+    (repeat (height canvas))
+    (ignore-errors (charms:write-string-at-point
+                     (window canvas) s 0 row))))
+
+
+;;;; Input --------------------------------------------------------------------
+(defun process-event (event)
+  (when event
+    (l event))
+  (case event
+    (:resize (progn (set-dimensions)
+                    (resize-layers)
+                    (blit))))
+  event)
+
+(defun read-event-no-hang ()
+  (process-event (charms:get-char t :ignore-error t)))
+
+(defun read-event (&optional timeout)
+  (if timeout
+    (iterate
+      (with deadline = (* internal-time-units-per-second timeout))
+      (thereis (read-event-no-hang))
+      (timing real-time :since-start-into elapsed)
+      (until (>= elapsed deadline))
+      (sleep 1/60))
+    (iterate (thereis (read-event-no-hang))
+             (sleep 1/60))))
+
+
+;;;; Main ---------------------------------------------------------------------
+(defun set-dimensions ()
+  (setf (values *screen-width* *screen-height*)
+        (charms:window-dimensions t)))
+
+(defmacro with-sane-debugger (&body body)
+  `(let ((*debugger-hook* (or *debugger-hook*
+                              (lambda (c h)
+                                (declare (ignore c h))
+                                (charms/ll:def-prog-mode)
+                                (charms/ll:endwin)))))
+     ,@body))
 
 (defmacro with-boots (&body body)
   `(charms:with-curses ()
      (charms:disable-echoing)
      (charms:enable-raw-input :interpret-control-characters t)
+     (charms:enable-non-blocking-mode t)
      (charms:enable-extra-keys t)
      ;; (charms/ll:start-color)
      (charms/ll:curs-set 0)
      (charms:clear-window t)
 
      (set-dimensions)
-     ,@body))
+
+     (with-sane-debugger
+       ,@body)))
 
 
 ;;;; Scratch ------------------------------------------------------------------
 (defvar *log* nil)
 
 (defun l (&rest forms)
-  (vector-push-extend forms *log*))
+  (vector-push-extend forms *log*)
+  (first forms))
 
 (defmacro with-logging (&body body)
   `(progn (setf *log* (make-array 16 :fill-pointer 0))
@@ -301,16 +363,6 @@
 
 (defparameter *title* "Hello!")
 
-(defun fill-canvas (char canvas)
-  (iterate
-    (with s = (make-string (actual-width canvas) :initial-element char))
-    (for row :from 0)
-    (repeat (actual-height canvas))
-    (ignore-errors (charms:write-string-at-point
-                     (window canvas) s 0 row))))
-
-(defun getch ()
-  (charms:get-char t :ignore-error t))
 
 (defun draw-title (canvas)
   (l 'drawing 'title *title*)
@@ -324,22 +376,53 @@
   (draw canvas 1 5 "This is another test"))
 
 (defun title ()
+  (with-layer (10 10)
+      (stack ()
+        (canvas (:height 5) 'draw-title)
+        (canvas (:height 10) 'draw-main))
+    (setf *title* "one")
+    (blit)
+    ;; (read-event 2)
+    (setf *title* "two")
+    (blit)
+    (read-event)
+    ))
+
+(defun title2 ()
+  (with-layer (30 10)
+      (canvas () (curry #'fill #\!))
+    (with-layer (10 10)
+        (stack ()
+          (canvas (:height 5) (curry #'fill #\x))
+          (canvas (:height 10) (curry #'fill #\y)))
+      (blit)
+      (read-event))))
+
+
+(defun draw-log (canvas)
+  (iterate (for e :in-vector *log*)
+           (for row :from 0)
+           (draw canvas row 0 "~S" e)))
+
+(defun foo ()
   (with-layer ()
       (stack ()
-        (canvas (:height 5) (curry #'fill-canvas #\x))
+        (canvas (:height 5) (curry #'fill #\x))
         (shelf ()
-          (canvas (:width 0.1) (curry #'fill-canvas #\-))
-          (canvas () (curry #'fill-canvas #\_))
-          (canvas (:width 0.5) (curry #'fill-canvas #\#))))
+          (canvas (:width 0.1) (curry #'fill #\-))
+          (canvas () (curry #'fill #\_))
+          (canvas (:width 0.5) 'draw-log)))
     (with-layer (30)
         (shelf ()
-          (canvas (:width 0.2) (curry #'fill-canvas #\!))
-          (canvas () (curry #'fill-canvas #\$)))
-      (blit)
-      (getch))))
+          (canvas (:width 0.2) (curry #'fill #\!))
+          (canvas () (curry #'fill #\$)))
+      (iterate
+        (blit)
+        (thereis (eql #\q (read-event)))))))
+
 
 (defun run ()
   (with-logging
     (with-boots
-      (title))))
+      (title2))))
 
