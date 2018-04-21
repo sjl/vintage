@@ -73,7 +73,7 @@
     (destroy layer)))
 
 
-(defmacro with-layer ((&optional (width :auto) (height width))
+(defmacro with-layer ((&key (width :auto) (height width))
                       content
                       &body body)
   (once-only (content)
@@ -270,6 +270,11 @@
 
 
 ;;;; Drawing ------------------------------------------------------------------
+(defmacro ignore-errors-if (test &body body)
+  `(if ,test
+     (ignore-errors ,@body)
+     (progn ,@body)))
+
 (defun draw (canvas row col string &rest format-args)
   (nest
     (when (< row (height canvas)))
@@ -279,10 +284,15 @@
                      (apply #'format nil string format-args)
                      string))
            (length (length string))
-           (string (if (< length available-width)
+           (string (if (<= length available-width)
                      string
                      (subseq string 0 available-width)))))
-    (charms:write-string-at-point (window canvas) string col row)))
+    ;; curses returns an error if you try to draw to the bottom right character
+    ;; in a window, even though it write just fine, because it can't wrap the
+    ;; cursor to the next line.  great.
+    (ignore-errors-if (and (= row (1- (height canvas)))
+                           (= (length string) available-width))
+      (charms:write-string-at-point (window canvas) string col row))))
 
 (defun clear (canvas)
   (charms:clear-window (window canvas)))
@@ -298,8 +308,6 @@
 
 ;;;; Input --------------------------------------------------------------------
 (defun process-event (event)
-  (when event
-    (l event))
   (case event
     (:resize (progn (set-dimensions)
                     (resize-layers)
@@ -351,78 +359,60 @@
 
 
 ;;;; Scratch ------------------------------------------------------------------
-(defvar *log* nil)
-
-(defun l (&rest forms)
-  (vector-push-extend forms *log*)
-  (first forms))
-
-(defmacro with-logging (&body body)
-  `(progn (setf *log* (make-array 16 :fill-pointer 0))
-          ,@body))
-
-(defparameter *title* "Hello!")
+;; (defparameter *title* "Hello!")
 
 
-(defun draw-title (canvas)
-  (l 'drawing 'title *title*)
-  (clear canvas)
-  (draw canvas 0 0 *title*))
+;; (defun draw-title (canvas)
+;;   (l 'drawing 'title *title*)
+;;   (clear canvas)
+;;   (draw canvas 0 0 *title*))
 
-(defun draw-main (canvas)
-  (l 'drawing 'main)
-  (clear canvas)
-  (draw canvas 0 0 "This is a test")
-  (draw canvas 1 5 "This is another test"))
+;; (defun draw-main (canvas)
+;;   (l 'drawing 'main)
+;;   (clear canvas)
+;;   (draw canvas 0 0 "This is a test")
+;;   (draw canvas 1 5 "This is another test"))
 
-(defun title ()
-  (with-layer (10 10)
-      (stack ()
-        (canvas (:height 5) 'draw-title)
-        (canvas (:height 10) 'draw-main))
-    (setf *title* "one")
-    (blit)
-    ;; (read-event 2)
-    (setf *title* "two")
-    (blit)
-    (read-event)
-    ))
+;; (defun title ()
+;;   (with-layer (10 10)
+;;       (stack ()
+;;         (canvas (:height 5) 'draw-title)
+;;         (canvas (:height 10) 'draw-main))
+;;     (setf *title* "one")
+;;     (blit)
+;;     ;; (read-event 2)
+;;     (setf *title* "two")
+;;     (blit)
+;;     (read-event)
+;;     ))
 
-(defun title2 ()
-  (with-layer (30 10)
-      (canvas () (curry #'fill #\!))
-    (with-layer (10 10)
-        (stack ()
-          (canvas (:height 5) (curry #'fill #\x))
-          (canvas (:height 10) (curry #'fill #\y)))
-      (blit)
-      (read-event))))
-
-
-(defun draw-log (canvas)
-  (iterate (for e :in-vector *log*)
-           (for row :from 0)
-           (draw canvas row 0 "~S" e)))
-
-(defun foo ()
-  (with-layer ()
-      (stack ()
-        (canvas (:height 5) (curry #'fill #\x))
-        (shelf ()
-          (canvas (:width 0.1) (curry #'fill #\-))
-          (canvas () (curry #'fill #\_))
-          (canvas (:width 0.5) 'draw-log)))
-    (with-layer (30)
-        (shelf ()
-          (canvas (:width 0.2) (curry #'fill #\!))
-          (canvas () (curry #'fill #\$)))
-      (iterate
-        (blit)
-        (thereis (eql #\q (read-event)))))))
+;; (defun title2 ()
+;;   (with-layer (30 10)
+;;       (canvas () (curry #'fill #\!))
+;;     (with-layer (10 10)
+;;         (stack ()
+;;           (canvas (:height 5) (curry #'fill #\x))
+;;           (canvas (:height 10) (curry #'fill #\y)))
+;;       (blit)
+;;       (read-event))))
 
 
-(defun run ()
-  (with-logging
-    (with-boots
-      (title2))))
+;; (defun foo ()
+;;   (with-layer ()
+;;       (stack ()
+;;         (canvas (:height 5) (curry #'fill #\x))
+;;         (shelf ()
+;;           (canvas (:width 0.1) (curry #'fill #\-))
+;;           (canvas () (curry #'fill #\_))
+;;           (canvas (:width 0.5) 'draw-log)))
+;;     (with-layer (30)
+;;         (shelf ()
+;;           (canvas (:width 0.2) (curry #'fill #\!))
+;;           (canvas () (curry #'fill #\$)))
+;;       (iterate
+;;         (blit)
+;;         (thereis (eql #\q (read-event)))))))
+
+
+
 
