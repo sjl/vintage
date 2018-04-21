@@ -1,4 +1,4 @@
-.PHONY: vendor clean binary-sbcl binary-ccl
+.PHONY: vendor clean binary-sbcl binary-ccl binary
 
 # Vendor ----------------------------------------------------------------------
 vendor/quickutils.lisp: vendor/make-quickutils.lisp
@@ -33,3 +33,12 @@ bin/vintage-sbcl: $(lisps) $(assets) Makefile
 bin/vintage-ccl: $(lisps) $(assets) Makefile
 	make binary-ccl
 
+bin/vintage: $(lisps) $(assets) Makefile
+	make binary-sbcl
+	mv bin/vintage-sbcl bin/vintage
+
+binary: binary-sbcl
+	mv bin/vintage-sbcl bin/vintage
+
+all: binary-sbcl binary-ccl
+	cp bin/vintage-sbcl bin/vintage
