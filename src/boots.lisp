@@ -221,7 +221,7 @@
                  (map 'list #'desired-width <>)
                  (normalize-floats width <>)
                  (distribute-autos width <>)
-                 (cap-overflow height <>))
+                 (cap-overflow width <>))
                row col height))
 
 (defmethod resize ((canvas canvas) row col width height)
