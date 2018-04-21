@@ -12,4 +12,4 @@
                :with-gensyms
 
                )
-  :package "LJ.QUICKUTILS")
+  :package "VINTAGE.QUICKUTILS")

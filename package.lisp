@@ -1,5 +1,5 @@
 (defpackage :boots
-  (:use :cl :iterate :losh :lj.quickutils)
+  (:use :cl :iterate :losh :vintage.quickutils)
   (:shadow :fill)
   (:export
     :with-boots
@@ -20,6 +20,6 @@
     :width
     :height))
 
-(defpackage :lj
-  (:use :cl :iterate :losh :lj.quickutils)
+(defpackage :vintage
+  (:use :cl :iterate :losh :vintage.quickutils)
   (:export))

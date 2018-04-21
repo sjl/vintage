@@ -1,10 +1,10 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (unless (find-package "LJ.QUICKUTILS")
-    (defpackage "LJ.QUICKUTILS"
+  (unless (find-package "VINTAGE.QUICKUTILS")
+    (defpackage "VINTAGE.QUICKUTILS"
       (:documentation "Package that contains Quickutil utility functions.")
       (:use :cl))))
 
-(in-package "LJ.QUICKUTILS")
+(in-package "VINTAGE.QUICKUTILS")
 
 ;; need to define this here so sbcl will shut the hell up about it being
 ;; undefined when compiling quickutils.lisp.  computers are trash.

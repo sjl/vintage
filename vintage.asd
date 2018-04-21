@@ -1,5 +1,5 @@
-(asdf:defsystem :lj
-  :description "Lisp Game Jam 2018"
+(asdf:defsystem :vintage
+  :description "My entry in the Lisp Game Jam 2018"
 
   :author "Steve Losh <steve@stevelosh.com>"
   :license "MIT"
@@ -20,4 +20,5 @@
    (:file "package")
    (:module "src" :serial t
     :components
-    ((:file "boots")))))
+    ((:file "boots")
+     (:file "main")))))

@@ -2,15 +2,15 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS) :ensure-package T :package "LJ.QUICKUTILS")
+;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS) :ensure-package T :package "VINTAGE.QUICKUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (unless (find-package "LJ.QUICKUTILS")
-    (defpackage "LJ.QUICKUTILS"
+  (unless (find-package "VINTAGE.QUICKUTILS")
+    (defpackage "VINTAGE.QUICKUTILS"
       (:documentation "Package that contains Quickutil utility functions.")
       (:use #:cl))))
 
-(in-package "LJ.QUICKUTILS")
+(in-package "VINTAGE.QUICKUTILS")
 
 (when (boundp '*utilities*)
   (setf *utilities* (union *utilities* '(:MAKE-GENSYM-LIST :ENSURE-FUNCTION
