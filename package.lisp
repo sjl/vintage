@@ -22,4 +22,5 @@
 
 (defpackage :vintage
   (:use :cl :iterate :losh :vintage.quickutils)
-  (:export))
+  (:export
+    :toplevel))
