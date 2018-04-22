@@ -42,3 +42,17 @@ binary: binary-sbcl
 
 all: binary-sbcl binary-ccl
 	cp bin/vintage-sbcl bin/vintage
+
+# Deploy -----------------------------------------------------------------------
+server-update-deps:
+	hg  -R /home/sjl/lib/cl-losh   pull -v -u
+	hg  -R /home/sjl/lib/cl-pcg    pull -v -u
+	git -C /home/sjl/lib/cl-charms pull --ff-only origin dev
+
+server-binary: binary
+	rm -f /opt/vintage/vintage
+	cp build/vintage /opt/vintage/vintage
+
+deploy:
+	rsync --exclude=build --exclude=.hg --exclude '*.fasl' -avz . jam:/home/sjl/vintage
+	ssh jam make -C /home/sjl/src/vintage server-update-deps server-binary
