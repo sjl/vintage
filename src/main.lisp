@@ -1,10 +1,6 @@
 (in-package :vintage)
 
 
-;;;; State --------------------------------------------------------------------
-(defvar *player* nil)
-
-
 ;;;; UI -----------------------------------------------------------------------
 (defun center (canvas line)
   (max 0 (- (truncate (boots:width canvas) 2)
@@ -24,29 +20,23 @@
 
 
 ;;;; Title --------------------------------------------------------------------
-(defparameter *title*
-  (read-lines "assets/title" :omit-empty t))
-
 (define-state title
-  (boots:with-layer (:height (length *title*)
-                     :width (length (first *title*)))
-      (boots:canvas () (rcurry #'draw-lines *title*))
+  (boots:with-layer (:height (length *asset-title*)
+                     :width (length (first *asset-title*)))
+      (boots:canvas () (rcurry #'draw-lines *asset-title*))
     (boots:blit)
     (boots:read-event)
     (transition intro)))
 
 
 ;;;; Intro --------------------------------------------------------------------
-(defparameter *intro*
-  (read-lines "assets/intro" :omit-empty nil))
-
 (define-state intro
-  (boots:with-layer (:width 60 :height (+ 2 (length (word-wrap *intro* 58))))
+  (boots:with-layer (:width 60 :height (+ 2 (length (word-wrap *asset-intro* 58))))
       (boots:canvas ()
                     (lambda (c)
                       (boots:clear c)
                       (boots:border c)
-                      (draw-lines c (word-wrap *intro* (- (boots:width c) 2))
+                      (draw-lines c (word-wrap *asset-intro* (- (boots:width c) 2))
                                   1 1)))
     (boots:blit)
     (wait-for-event #\Space)
@@ -58,8 +48,6 @@
   (boots:clear canvas)
   (boots:draw canvas 0 0 "Loading, please wait..."))
 
-(defun generate-player ()
-  (setf *player* (make-player *initial-player-row* *initial-player-col*)))
 
 (define-state world-generation
   (boots:with-layer ()
@@ -68,8 +56,7 @@
     (progn
       (init-messages)
       (clear-entities)
-      (load-terrain)
-      (generate-player))
+      (load-terrain))
     (sleep 1/5)
     (transition game-loop)))
 
@@ -89,14 +76,13 @@
 (defun move-player (direction)
   (nest
     (multiple-value-bind (dr dc) (direction-to-offsets direction))
-    (with-loc (*player*))
-    (let ((r (+ row dr))
-          (c (+ col dc))))
+    (let ((r (+ (loc/row *player*) dr))
+          (c (+ (loc/col *player*) dc))))
     (cond ((not (in-bounds-p r c))
            (message "You can't leave the shop unattended."))
           ((not (passablep r c))
            (message "There's something in the way."))
-          (t (setf row r col c)))))
+          (t (move *player* r c)))))
 
 
 ;;;; Game Loop ----------------------------------------------------------------
@@ -209,11 +195,10 @@
     (t t)))
 
 (defun run ()
-  (with-logging
-    (boots:with-boots
-      (init-colors)
-      (let ((boots:*global-input-hook* 'global-input-hook))
-        (title)))))
+  (boots:with-boots
+    (init-colors)
+    (let ((boots:*global-input-hook* 'global-input-hook))
+      (title))))
 
 
 ;;;; Toplevel -----------------------------------------------------------------

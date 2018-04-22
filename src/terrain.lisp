@@ -1,19 +1,5 @@
 (in-package :vintage)
 
-;;;; State --------------------------------------------------------------------
-(defparameter *map*
-  (read-lines "assets/map" :omit-empty t))
-
-(defvar *map-height* nil)
-(defvar *map-width* nil)
-
-(defvar *initial-player-row* 0)
-(defvar *initial-player-col* 0)
-
-(defvar *terrain* nil) ; array of strings
-(defvar *terrain-colors* nil)
-
-
 ;;;; Code ---------------------------------------------------------------------
 (defun terrain (row col)
   (aref (aref *terrain* row) col))
@@ -33,23 +19,20 @@
            ,@body)))))
 
 
-(defun load-initial-player-location ()
+(defun load-terrain-entities ()
   (do-terrain (cell row col)
-    (when (eql #\@ cell)
-      (setf *initial-player-row* row
-            *initial-player-col* col
-            cell #\Space)
-      (return))))
+    (when (case cell
+            (#\@ (setf *player* (make-player row col)))
+            (#\$ (make-cash-register row col)))
+      (setf cell #\Space))))
 
 (defun cell-color (char)
   (case char
     (#\= +yellow-black+)
-    (#\$ +yellow-black+)
     (#\~ +blue-black+)))
 
 (defun cell-attrs (char)
   (case char
-    (#\$ charms/ll:A_BOLD)
     (t 0)))
 
 (defun load-terrain-colors ()
@@ -71,10 +54,11 @@
 
 
 (defun load-terrain ()
-  (setf *map-height* (length *map*)
-        *map-width* (length (first *map*))
-        *terrain* (make-array *map-height* :initial-contents *map*))
-  (load-initial-player-location)
+  (setf *map-height* (length *asset-map*)
+        *map-width* (length (first *asset-map*))
+        *terrain* (make-array *map-height* :initial-contents *asset-map*))
+  (initialize-locations) ; shitty
+  (load-terrain-entities)
   (load-terrain-colors)
   t)
 
@@ -83,7 +67,14 @@
   (and (in-range-p 0 row *map-height*)
        (in-range-p 0 col *map-width*)))
 
+
+(defun terrain-passable-p (row col)
+  (ensure-boolean (position (terrain row col) " =Lu<")))
+
+(defun solid-at-p (row col)
+  (ensure-boolean (find-if #'solid? (entities-at row col))))
+
 (defun passablep (row col)
-  (ensure-boolean
-    (position (terrain row col) " =Lu<")))
+  (and (terrain-passable-p row col)
+       (not (solid-at-p row col))))
 

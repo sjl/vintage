@@ -28,12 +28,14 @@
   (+black-red+    charms/ll:COLOR_BLACK charms/ll:COLOR_RED)
   (+black-pink+   charms/ll:COLOR_BLACK charms/ll:COLOR_MAGENTA))
 
-(defmacro with-color ((canvas color) &body body)
-  (once-only (canvas color)
-    `(unwind-protect
-       (progn
-         (charms/ll:wattron (charms::window-pointer (window ,canvas))
-                            (charms/ll:color-pair ,color))
-         ,@body)
-       (charms/ll:wattroff (charms::window-pointer (window ,canvas))
-                           (charms/ll:color-pair ,color)))))
+(defconstant +bold+ charms/ll:A_BOLD)
+
+(defmacro with-color ((canvas color &rest attributes) &body body)
+  (with-gensyms (window attrs)
+    `(let ((,attrs (logior (charms/ll:color-pair ,color) ,@attributes))
+           (,window (charms::window-pointer (boots::window ,canvas))))
+       (unwind-protect
+           (progn
+             (charms/ll:wattron ,window ,attrs)
+             ,@body)
+         (charms/ll:wattroff ,window ,attrs)))))

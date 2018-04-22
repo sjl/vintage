@@ -2,9 +2,6 @@
 
 ;; todo make this a ring buffer
 
-(defvar *messages* nil)
-(defvar *messages-limit* 10)
-
 (defstruct message
   (string (error "Required") :type string)
   (prev nil :type (or null message))
@@ -39,8 +36,10 @@
     (decf size)))
 
 (defun message (string)
-  (when (> (append-message *messages* string) *messages-limit*)
-    (pop-message *messages*)))
+  (when (> (append-message *messages* (aesthetic-string string))
+           *messages-limit*)
+    (pop-message *messages*))
+  string)
 
 (defmacro-driver (FOR var IN-MESSAGE-LOG message-log)
   (let ((kwd (if generate 'generate 'for)))

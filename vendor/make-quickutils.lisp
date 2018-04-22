@@ -12,6 +12,7 @@
                :with-gensyms
                :ensure-boolean
                :ensure-list
+               :deletef
 
                )
   :package "VINTAGE.QUICKUTILS")

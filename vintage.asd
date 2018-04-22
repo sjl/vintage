@@ -26,6 +26,7 @@
      (:file "utils")
      (:file "wrap")
      (:file "color")
+     (:file "state")
      (:file "aspects")
      (:file "entities")
      (:file "messages")

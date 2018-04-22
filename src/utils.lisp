@@ -17,18 +17,6 @@
        (thereis (eql ,goal (boots:read-event))))))
 
 
-;;;; Logging ------------------------------------------------------------------
-(defvar *log* nil)
-
-(defun l (&rest forms)
-  (vector-push-extend forms *log*)
-  (first forms))
-
-(defmacro with-logging (&body body)
-  `(progn (setf *log* (make-array 16 :fill-pointer 0))
-          ,@body))
-
-
 ;;;; State Machines -----------------------------------------------------------
 (defmacro define-state-machine-macros ()
   (with-gensyms (next-state transition recur main)
