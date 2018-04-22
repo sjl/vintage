@@ -32,6 +32,7 @@
 
 (defpackage :vintage
   (:use :cl :iterate :losh :vintage.quickutils
+    :beast
     :vintage.wrap)
   (:export
     :toplevel))

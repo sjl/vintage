@@ -10,6 +10,7 @@
                :rcurry
                :symb
                :with-gensyms
+               :ensure-boolean
 
                )
   :package "VINTAGE.QUICKUTILS")

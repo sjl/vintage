@@ -8,6 +8,7 @@
 
                :cl-charms
                :iterate
+               :beast
                :losh
                :split-sequence
 
@@ -22,5 +23,9 @@
    (:module "src" :serial t
     :components
     ((:file "boots")
+     (:file "utils")
      (:file "wrap")
+     (:file "aspects")
+     (:file "entities")
+     (:file "messages")
      (:file "main")))))

@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS) :ensure-package T :package "VINTAGE.QUICKUTILS")
+;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS :ENSURE-BOOLEAN) :ensure-package T :package "VINTAGE.QUICKUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "VINTAGE.QUICKUTILS")
@@ -16,7 +16,7 @@
   (setf *utilities* (union *utilities* '(:MAKE-GENSYM-LIST :ENSURE-FUNCTION
                                          :COMPOSE :CURRY :ONCE-ONLY :RCURRY
                                          :MKSTR :SYMB :STRING-DESIGNATOR
-                                         :WITH-GENSYMS))))
+                                         :WITH-GENSYMS :ENSURE-BOOLEAN))))
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-gensym-list (length &optional (x "G"))
     "Returns a list of `length` gensyms, each generated as if with a call to `make-gensym`,
@@ -199,7 +199,13 @@ The string-designator is used as the argument to `gensym` when constructing the
 unique symbol the named variable will be bound to."
     `(with-gensyms ,names ,@forms))
   
+
+  (defun ensure-boolean (x)
+    "Convert `x` into a Boolean value."
+    (and x t))
+  
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (export '(compose curry once-only rcurry symb with-gensyms with-unique-names)))
+  (export '(compose curry once-only rcurry symb with-gensyms with-unique-names
+            ensure-boolean)))
 
 ;;;; END OF quickutils.lisp ;;;;
