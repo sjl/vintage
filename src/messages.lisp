@@ -1,5 +1,7 @@
 (in-package :vintage)
 
+;; todo make this a ring buffer
+
 (defvar *messages* nil)
 (defvar *messages-limit* 10)
 

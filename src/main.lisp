@@ -4,33 +4,6 @@
 ;;;; State --------------------------------------------------------------------
 (defvar *player* nil)
 
-;;;; Terrain ------------------------------------------------------------------
-(defparameter *map*
-  (read-lines "assets/map" :omit-empty t))
-
-(defvar *map-height* nil)
-(defvar *map-width* nil)
-
-(defparameter *terrain* nil)
-
-(defun load-terrain ()
-  (setf *map-height* (length *map*)
-        *map-width* (length (first *map*))
-        *terrain* (make-array (list *map-height* *map-width*)
-                              :initial-contents *map*)))
-
-(defun-inline terrain (row col)
-  (aref *terrain* row col))
-
-
-(defun in-bounds-p (row col)
-  (and (in-range-p 0 row *map-height*)
-       (in-range-p 0 col *map-width*)))
-
-(defun passablep (row col)
-  (ensure-boolean
-    (position (terrain row col) " =Lu<")))
-
 
 ;;;; Title --------------------------------------------------------------------
 (defparameter *title*
@@ -68,7 +41,7 @@
   (boots:draw canvas 0 0 "Loading, please wait..."))
 
 (defun generate-player ()
-  (setf *player* (make-player 5 5)))
+  (setf *player* (make-player *initial-player-row* *initial-player-col*)))
 
 (define-state world-generation
   (boots:with-layer ()
@@ -86,14 +59,14 @@
 ;;;; Player Control -----------------------------------------------------------
 (defun event-to-direction (move)
   (ecase move
-    (#\h (values  0 -1))
-    (#\j (values  1  0))
-    (#\k (values -1  0))
-    (#\l (values  0  1))
-    (#\y (values -1 -1))
-    (#\u (values -1  1))
-    (#\b (values  1 -1))
-    (#\n (values  1  1))))
+    ((#\h :left)  (values  0 -1))
+    ((#\j :down)  (values  1  0))
+    ((#\k :up)    (values -1  0))
+    ((#\l :right) (values  0  1))
+    (#\y          (values -1 -1))
+    (#\u          (values -1  1))
+    (#\b          (values  1 -1))
+    (#\n          (values  1  1))))
 
 (defun move-player (move)
   (nest
@@ -102,7 +75,7 @@
     (let ((r (+ row dr))
           (c (+ col dc))))
     (cond ((not (in-bounds-p r c))
-           (message "You can't leave the shop untended."))
+           (message "You can't leave the shop unattended."))
           ((not (passablep r c))
            (message "There's something in the way."))
           (t (setf row r col c)))))
@@ -138,9 +111,6 @@
   (let ((*render-canvas* canvas))
     (run-render)))
 
-(defun draw-terrain (canvas)
-  (draw-lines canvas *map* 0 0))
-
 (defun draw-map (canvas)
   (boots:clear canvas)
   (draw-terrain canvas)
@@ -173,7 +143,7 @@
                  (#\q (return-from game-loop))
                  (#\x (message "ping") t)
                  (#\r (message "hello my baby hello my honey hello my ragtime gal") t)
-                 ((#\h #\j #\k #\l #\y #\u #\b #\n)
+                 ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
                   (move-player e)
                   t)))))))
 
@@ -189,6 +159,7 @@
 (defun run ()
   (with-logging
     (boots:with-boots
+      (init-colors)
       (let ((boots:*global-input-hook* 'global-input-hook))
         (title)))))
 

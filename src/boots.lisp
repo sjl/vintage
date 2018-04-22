@@ -318,12 +318,13 @@
                               t))
 
 (defun process-event (event)
-  (case event
-    (:resize (progn (set-dimensions)
-                    (resize-layers)
-                    (blit))))
-  (when (and event (funcall *global-input-hook* event))
-    event))
+  (when event
+    (case event
+      (:resize (progn (set-dimensions)
+                      (resize-layers)
+                      (blit))))
+    (when (funcall *global-input-hook* event)
+      event)))
 
 (defun read-event-no-hang ()
   (process-event (charms:get-char t :ignore-error t)))
@@ -359,7 +360,7 @@
      (charms:enable-raw-input :interpret-control-characters t)
      (charms:enable-non-blocking-mode t)
      (charms:enable-extra-keys t)
-     ;; (charms/ll:start-color)
+     (charms/ll:start-color)
      (charms/ll:curs-set 0)
      (charms:clear-window t)
 
