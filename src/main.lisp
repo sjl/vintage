@@ -157,7 +157,7 @@
       (boots:canvas () #'boots:clear))
     (boots:stack (:width 0.3)
       (boots:shelf ()
-        (boots:canvas (:width 1) (curry #'boots:fill #\|))
+        (boots:canvas (:width 1) (curry #'boots:fill #\│))
         (boots:stack ()
           (boots:canvas (:height 1) 'draw-status)
           (boots:canvas () 'draw-messages))))))

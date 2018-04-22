@@ -51,8 +51,8 @@ server-update-deps:
 
 server-binary: binary
 	rm -f /opt/vintage/vintage
-	cp build/vintage /opt/vintage/vintage
+	cp bin/vintage /opt/vintage/vintage
 
 deploy:
-	rsync --exclude=build --exclude=.hg --exclude '*.fasl' -avz . jam:/home/sjl/vintage
+	rsync --exclude=bin --exclude=.hg --exclude '*.fasl' -avz . jam:/home/sjl/src/vintage
 	ssh jam make -C /home/sjl/src/vintage server-update-deps server-binary
