@@ -11,6 +11,7 @@
                :symb
                :with-gensyms
                :ensure-boolean
+               :ensure-list
 
                )
   :package "VINTAGE.QUICKUTILS")

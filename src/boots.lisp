@@ -7,6 +7,8 @@
 (defvar *layers* nil)
 (defvar *screen-width* nil)
 (defvar *screen-height* nil)
+(defvar *cursor-row* 0)
+(defvar *cursor-col* 0)
 
 
 ;;;; Types --------------------------------------------------------------------
@@ -251,6 +253,12 @@
   (map nil #'resize-layer *layers*))
 
 
+;;;; Cursor -------------------------------------------------------------------
+(defun move-cursor (canvas row col)
+  (setf *cursor-row* (+ (row canvas) row)
+        *cursor-col* (+ (col canvas) col)))
+
+
 ;;;; Blitting -----------------------------------------------------------------
 (defgeneric blit% (object))
 
@@ -266,6 +274,7 @@
 (defun blit ()
   (map nil #'blit% *layers*)
   (charms:update-panels)
+  (charms:move-cursor t *cursor-col* *cursor-row*)
   (charms:update))
 
 
@@ -310,6 +319,7 @@
     (charms/ll:wborder (charms::window-pointer (window canvas))
                        0 0 0 0 0 0 0 0))
   t)
+
 
 
 ;;;; Input --------------------------------------------------------------------
@@ -361,7 +371,7 @@
      (charms:enable-non-blocking-mode t)
      (charms:enable-extra-keys t)
      (charms/ll:start-color)
-     (charms/ll:curs-set 0)
+     ;; (charms/ll:curs-set 0)
      (charms:clear-window t)
 
      (set-dimensions)

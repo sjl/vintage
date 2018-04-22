@@ -5,6 +5,24 @@
 (defvar *player* nil)
 
 
+;;;; UI -----------------------------------------------------------------------
+(defun center (canvas line)
+  (max 0 (- (truncate (boots:width canvas) 2)
+            (truncate (length line) 2))))
+
+(defun popup (canvas text &optional header footer)
+  (boots:clear canvas)
+  (boots:border canvas)
+  (draw-lines canvas
+              (word-wrap (ensure-list text)
+                         (- (boots:width canvas) 2))
+              1 1)
+  (when header
+    (boots:draw canvas 0 (center canvas header) header))
+  (when footer
+    (boots:draw canvas (1- (boots:height canvas)) (center canvas footer) footer)))
+
+
 ;;;; Title --------------------------------------------------------------------
 (defparameter *title*
   (read-lines "assets/title" :omit-empty t))
@@ -57,20 +75,20 @@
 
 
 ;;;; Player Control -----------------------------------------------------------
-(defun event-to-direction (move)
+(defun direction-to-offsets (move)
   (ecase move
-    ((#\h :left)  (values  0 -1))
-    ((#\j :down)  (values  1  0))
-    ((#\k :up)    (values -1  0))
-    ((#\l :right) (values  0  1))
-    (#\y          (values -1 -1))
-    (#\u          (values -1  1))
-    (#\b          (values  1 -1))
-    (#\n          (values  1  1))))
+    (:w  (values  0 -1))
+    (:s  (values  1  0))
+    (:n  (values -1  0))
+    (:e  (values  0  1))
+    (:nw (values -1 -1))
+    (:ne (values -1  1))
+    (:sw (values  1 -1))
+    (:se (values  1  1))))
 
-(defun move-player (move)
+(defun move-player (direction)
   (nest
-    (multiple-value-bind (dr dc) (event-to-direction move))
+    (multiple-value-bind (dr dc) (direction-to-offsets direction))
     (with-loc (*player*))
     (let ((r (+ row dr))
           (c (+ col dc))))
@@ -109,12 +127,14 @@
 
 (defun draw-entities (canvas)
   (let ((*render-canvas* canvas))
-    (run-render)))
+    (run-render))
+  (boots:move-cursor canvas (loc/row *player*) (loc/col *player*)))
 
 (defun draw-map (canvas)
   (boots:clear canvas)
   (draw-terrain canvas)
   (draw-entities canvas))
+
 
 (defun game-ui ()
   (boots:shelf ()
@@ -133,26 +153,58 @@
           (boots:canvas () 'draw-messages))))))
 
 
+(defun event-to-direction (event)
+  (ecase event
+    ((#\h :left)  :w)
+    ((#\j :down)  :s)
+    ((#\k :up)    :n)
+    ((#\l :right) :e)
+    (#\y          :nw)
+    (#\u          :ne)
+    (#\b          :sw)
+    (#\n          :se)))
+
+(defun parse-input (event)
+  (case event
+    (#\q '(:quit))
+    ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
+     (list :move (event-to-direction event)))
+    (#\? '(:help))))
+
+
+(defun draw-help (canvas)
+  (popup canvas
+         '("Bump into things to interact with them."
+           ""
+           "CONTROLS"
+           ""
+           "[hjklyubn/arrows] move"
+           "[?] help"
+           "[q] quit")
+         "HELP" "Press any key"))
+
+(defun show-help ()
+  (boots:with-layer (:width 40 :height 12)
+      (boots:canvas () 'draw-help)
+    (boots:blit)
+    (boots:read-event)))
+
 (define-state game-loop ()
   (boots:with-layer () (game-ui)
     (iterate
       (boots:blit)
-      (iterate
-        (for e = (boots:read-event))
-        (until (case e
-                 (#\q (return-from game-loop))
-                 (#\x (message "ping") t)
-                 (#\r (message "hello my baby hello my honey hello my ragtime gal") t)
-                 ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
-                  (move-player e)
-                  t)))))))
+      (for event = (parse-input (boots:read-event)))
+      (case (first event)
+        (:quit (return-from game-loop))
+        (:move (move-player (second event)))
+        (:help (show-help))))))
 
 
 ;;;; Main ---------------------------------------------------------------------
 (defun global-input-hook (event)
   (case event
     (#\~ (boots:blit) nil)
-    (#\= (/ 1 0))
+    (#\= (error "Bork"))
     (:resize nil)
     (t t)))
 

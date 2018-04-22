@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS :ENSURE-BOOLEAN) :ensure-package T :package "VINTAGE.QUICKUTILS")
+;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS :ENSURE-BOOLEAN :ENSURE-LIST) :ensure-package T :package "VINTAGE.QUICKUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "VINTAGE.QUICKUTILS")
@@ -16,7 +16,8 @@
   (setf *utilities* (union *utilities* '(:MAKE-GENSYM-LIST :ENSURE-FUNCTION
                                          :COMPOSE :CURRY :ONCE-ONLY :RCURRY
                                          :MKSTR :SYMB :STRING-DESIGNATOR
-                                         :WITH-GENSYMS :ENSURE-BOOLEAN))))
+                                         :WITH-GENSYMS :ENSURE-BOOLEAN
+                                         :ENSURE-LIST))))
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-gensym-list (length &optional (x "G"))
     "Returns a list of `length` gensyms, each generated as if with a call to `make-gensym`,
@@ -204,8 +205,15 @@ unique symbol the named variable will be bound to."
     "Convert `x` into a Boolean value."
     (and x t))
   
+
+  (defun ensure-list (list)
+    "If `list` is a list, it is returned. Otherwise returns the list designated by `list`."
+    (if (listp list)
+        list
+        (list list)))
+  
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (export '(compose curry once-only rcurry symb with-gensyms with-unique-names
-            ensure-boolean)))
+            ensure-boolean ensure-list)))
 
 ;;;; END OF quickutils.lisp ;;;;

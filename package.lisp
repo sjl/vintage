@@ -21,6 +21,8 @@
     :width
     :height
 
+    :move-cursor
+
     :*global-input-hook*
 
     ))
