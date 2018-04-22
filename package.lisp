@@ -35,4 +35,5 @@
     :beast
     :vintage.wrap)
   (:export
+    :run
     :toplevel))

@@ -157,8 +157,7 @@
       (boots:canvas () #'boots:clear))
     (boots:stack (:width 0.3)
       (boots:shelf ()
-        (boots:canvas (:width 1)
-                      (curry #'boots:fill #\box_drawings_light_vertical))
+        (boots:canvas (:width 1) (curry #'boots:fill #\|))
         (boots:stack ()
           (boots:canvas (:height 1) 'draw-status)
           (boots:canvas () 'draw-messages))))))
@@ -183,6 +182,7 @@
 (defun global-input-hook (event)
   (case event
     (#\~ (boots:blit) nil)
+    (#\= (/ 1 0))
     (:resize nil)
     (t t)))
 
@@ -192,5 +192,10 @@
       (let ((boots:*global-input-hook* 'global-input-hook))
         (title)))))
 
+
+;;;; Toplevel -----------------------------------------------------------------
 (defun toplevel ()
-  (run))
+  ;; #+sbcl (sb-ext:disable-debugger)
+  (setf *random-state* (make-random-state t))
+  (handler-case (run)
+    (t (c) (format t "Error: ~A" c))))
