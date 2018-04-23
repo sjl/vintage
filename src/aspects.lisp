@@ -71,3 +71,7 @@
 (define-aspect solid)
 
 
+;;;; Flavor -------------------------------------------------------------------
+(define-aspect flavor
+  (name :type string))
+

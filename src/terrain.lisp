@@ -23,8 +23,14 @@
   (do-terrain (cell row col)
     (when (case cell
             (#\@ (setf *player* (make-player row col)))
-            (#\$ (make-cash-register row col)))
+            (#\$ (make-cash-register row col))
+            (#\t (make-table row col))
+            (#\C (make-computer row col))
+            (#\u (make-toilet row col))
+            (#\O (make-sink row col))
+            (#\< (make-stairs row col)))
       (setf cell #\Space))))
+
 
 (defun cell-color (char)
   (case char
@@ -47,6 +53,7 @@
   (iterate (for (row col color attrs) :in *terrain-colors*)
            (charms/ll:mvwchgat (charms::window-pointer (boots::window canvas))
                                row col 1 attrs color (cffi:null-pointer))))
+
 
 (defun draw-terrain (canvas)
   (draw-lines canvas *terrain* 0 0)

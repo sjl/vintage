@@ -16,6 +16,10 @@
     `(iterate
        (thereis (eql ,goal (boots:read-event))))))
 
+(defun english-list (list)
+  ;; http://www.gigamonkeys.com/book/a-few-format-recipes.html
+  (format nil "~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, and ~:;, ~]~}~]~}" list))
+
 
 ;;;; State Machines -----------------------------------------------------------
 (defmacro define-state-machine-macros ()

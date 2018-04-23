@@ -15,3 +15,8 @@
 
 (defvar *terrain* nil) ; array of strings
 (defvar *terrain-colors* nil)
+
+
+(defvar *looking* nil)
+(defvar *look-row* nil)
+(defvar *look-col* nil)

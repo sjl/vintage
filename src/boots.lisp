@@ -286,7 +286,7 @@
 
 (defun draw (canvas row col string &rest format-args)
   (nest
-    (when (< row (height canvas)))
+    (when (in-range-p 0 row (height canvas)))
     (let ((available-width (max 0 (- (width canvas) col)))))
     (when (plusp available-width))
     (let* ((string (if format-args

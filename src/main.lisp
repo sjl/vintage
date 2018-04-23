@@ -84,9 +84,17 @@
            (message "There's something in the way."))
           (t (move *player* r c)))))
 
+(defun move-look (direction)
+  (nest
+    (multiple-value-bind (dr dc) (direction-to-offsets direction))
+    (let ((r (+ *look-row* dr))
+          (c (+ *look-col* dc))))
+    (when (in-bounds-p r c)
+      (setf *look-row* r *look-col* c))))
+
 
 ;;;; Game Loop ----------------------------------------------------------------
-(defun draw-status (canvas)
+(defun draw-hud (canvas)
   (boots:clear canvas)
   (let ((time-string (format nil "TIME: 00:00"))
         (cash-string (format nil "$2,300"))
@@ -114,18 +122,31 @@
 (defun draw-entities (canvas)
   (let ((*render-canvas* canvas))
     (run-render))
-  (boots:move-cursor canvas (loc/row *player*) (loc/col *player*)))
+  (if *looking*
+    (boots:move-cursor canvas *look-row* *look-col*)
+    (boots:move-cursor canvas (loc/row *player*) (loc/col *player*))))
 
 (defun draw-map (canvas)
   (boots:clear canvas)
   (draw-terrain canvas)
   (draw-entities canvas))
 
+(defun draw-status (canvas)
+  (boots:clear canvas)
+  (when *looking*
+    (when-let ((visible (-<> (entities-at *look-row* *look-col*)
+                          (remove-if-not #'flavor? <>)
+                          (mapcar #'flavor/name <>))))
+      (draw-lines canvas
+                  (word-wrap (list (format nil "You see ~A"
+                                           (english-list visible)))
+                             (1- (boots:width canvas)))))))
+
 
 (defun game-ui ()
   (boots:shelf ()
     (boots:stack ()
-      (boots:canvas () #'boots:clear)
+      (boots:canvas () 'draw-status)
       (boots:shelf (:height *map-height*)
         (boots:canvas () #'boots:clear)
         (boots:canvas (:width *map-width*) 'draw-map)
@@ -135,7 +156,7 @@
       (boots:shelf ()
         (boots:canvas (:width 1) (curry #'boots:fill #\│))
         (boots:stack ()
-          (boots:canvas (:height 1) 'draw-status)
+          (boots:canvas (:height 1) 'draw-hud)
           (boots:canvas () 'draw-messages))))))
 
 
@@ -150,40 +171,66 @@
     (#\b          :sw)
     (#\n          :se)))
 
-(defun parse-input (event)
+(defun parse-input-main (event)
   (case event
     (#\q '(:quit))
+    (#\L '(:look))
+    (#\R '(:reload))
     ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
      (list :move (event-to-direction event)))
-    (#\? '(:help))))
+    (#\? '(:help))
+    (t (message event) nil)))
 
+(defun parse-input-look (event)
+  (case event
+    ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
+     (list :move (event-to-direction event)))))
+
+
+(defparameter help-text
+  '("Bump into things to interact with them."
+    ""
+    "CONTROLS"
+    ""
+    "[hjklyubn/arrows] move"
+    "[L] look"
+    "[?] help"
+    "[q] quit"))
 
 (defun draw-help (canvas)
-  (popup canvas
-         '("Bump into things to interact with them."
-           ""
-           "CONTROLS"
-           ""
-           "[hjklyubn/arrows] move"
-           "[?] help"
-           "[q] quit")
-         "HELP" "Press any key"))
+  (popup canvas help-text "HELP" "Press any key"))
 
 (defun show-help ()
-  (boots:with-layer (:width 40 :height 12)
+  (boots:with-layer
+      (:width 40 :height (+ 2 (length (word-wrap help-text 38)) 1))
       (boots:canvas () 'draw-help)
     (boots:blit)
     (boots:read-event)))
+
+
+(defun look ()
+  (let ((*looking* t)
+        (*look-row* (loc/row *player*))
+        (*look-col* (loc/col *player*)))
+    (iterate
+      (boots:blit)
+      (for event = (parse-input-look (boots:read-event)))
+      (case (first event)
+        (:move (move-look (second event)))
+        (t (return-from look))))))
 
 (define-state game-loop ()
   (boots:with-layer () (game-ui)
     (iterate
       (boots:blit)
-      (for event = (parse-input (boots:read-event)))
+      (for event = (parse-input-main (boots:read-event)))
       (case (first event)
         (:quit (return-from game-loop))
+        (:reload (ql:quickload :vintage :silent t))
+        (:look (look))
         (:move (move-player (second event)))
         (:help (show-help))))))
+
 
 
 ;;;; Main ---------------------------------------------------------------------
