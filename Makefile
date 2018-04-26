@@ -47,6 +47,7 @@ all: binary-sbcl binary-ccl
 server-update-deps:
 	hg  -R /home/sjl/lib/cl-losh   pull -v -u
 	hg  -R /home/sjl/lib/cl-pcg    pull -v -u
+	hg  -R /home/sjl/lib/chancery  pull -v -u
 	git -C /home/sjl/lib/cl-charms pull --ff-only origin dev
 
 server-binary: binary
