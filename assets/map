@@ -9,12 +9,12 @@
 │    ttttt  ttttt               │                 │
 │                               │                 │
 │    ttttt  ttttt               │                 │
-│                               │                 │
+│                               │            A    │
 │    ttttt  ttttt               │                 │
-│                               │                 │
-│    ttttt  ttttt          ##   │                 │
-│                          #$@  │                 │
-│    ttttt  ttttt          ##   │                 │
-│                               │                 │
+│                               │ A    A          │
+│    ttttt  ttttt          ##   │              A  │
+│                          #$@  │    A    A       │
+│    ttttt  ttttt          ##   │ A  A            │
+│                               │           A     │
 │                               │                 │
 └──~~~~~~~──~~~~~~~──==──~~~~~──┴─────────────────┘

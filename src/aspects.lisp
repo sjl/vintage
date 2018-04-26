@@ -75,3 +75,10 @@
 (define-aspect flavor
   (name :type string))
 
+
+;;;; Antique ------------------------------------------------------------------
+(define-aspect antique
+  (condition :type (single-float 0.0 1.0))
+  (color :type keyword)
+  (material :type keyword)
+  (date :type local-time:timestamp))

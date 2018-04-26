@@ -31,8 +31,8 @@
 (defun make-table (row col)
   (create-entity 'table
     :flavor/name "a wooden table"
-    :renderable/glyph #\-
-    :renderable/color +yellow-black+
+    :renderable/glyph #\space
+    :renderable/color +black-yellow+
     :loc/row row
     :loc/col col))
 
@@ -75,3 +75,4 @@
     :renderable/glyph #\<
     :loc/row row
     :loc/col col))
+

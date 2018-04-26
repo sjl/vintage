@@ -179,7 +179,7 @@
     ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
      (list :move (event-to-direction event)))
     (#\? '(:help))
-    (t (message event) nil)))
+    (t (message (structural-string event)) nil)))
 
 (defun parse-input-look (event)
   (case event
@@ -242,6 +242,7 @@
     (t t)))
 
 (defun run ()
+  (setf *random-state* (make-random-state t))
   (boots:with-boots
     (init-colors)
     (let ((boots:*global-input-hook* 'global-input-hook))
@@ -251,6 +252,5 @@
 ;;;; Toplevel -----------------------------------------------------------------
 (defun toplevel ()
   ;; #+sbcl (sb-ext:disable-debugger)
-  (setf *random-state* (make-random-state t))
   (handler-case (run)
     (t (c) (format t "Error: ~A" c))))

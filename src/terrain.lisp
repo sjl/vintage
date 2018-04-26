@@ -28,7 +28,8 @@
             (#\C (make-computer row col))
             (#\u (make-toilet row col))
             (#\O (make-sink row col))
-            (#\< (make-stairs row col)))
+            (#\< (make-stairs row col))
+            (#\A (generate-antique row col)))
       (setf cell #\Space))))
 
 

@@ -6,9 +6,11 @@
 
   :depends-on (
 
+               :beast
+               :chancery
                :cl-charms
                :iterate
-               :beast
+               :local-time
                :losh
                :split-sequence
 
@@ -29,6 +31,7 @@
      (:file "state")
      (:file "aspects")
      (:file "entities")
+     (:file "antiques")
      (:file "messages")
      (:file "terrain")
      (:file "main")))))
