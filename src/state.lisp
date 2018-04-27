@@ -24,3 +24,8 @@
 
 (defvar *cursor-row* nil)
 (defvar *cursor-col* nil)
+
+(defvar *current-time* nil)
+
+(defparameter *tick-time*
+  (* 1))

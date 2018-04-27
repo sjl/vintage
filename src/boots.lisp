@@ -355,6 +355,11 @@
   (process-event (charms:get-char t :ignore-error t)))
 
 (defun read-event (&optional timeout)
+  "Read an event.
+
+  If given, will wait at most `timeout` seconds before returning `nil`.
+
+  "
   (if timeout
     (iterate
       (with deadline = (* internal-time-units-per-second timeout))

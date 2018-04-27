@@ -22,6 +22,31 @@
   (setf *cursor-row* row *cursor-col* col))
 
 
+;;;; Time ---------------------------------------------------------------------
+(defun to-nsec (internal-time-units)
+  (-<> internal-time-units
+    (/ <> internal-time-units-per-second) ; seconds
+    (* <> 1000000000) ; nanoseconds 
+    truncate))
+
+(defun increment-clock (internal-time-units)
+  (timestamp-incf *current-time* (* *time-speed* (to-nsec internal-time-units))
+                  :nsec))
+
+(defmacro clocking (&body body)
+  (with-gensyms (start result end)
+    `(let ((,start (get-internal-real-time))
+           (,result (progn ,@body))
+           (,end (get-internal-real-time)))
+       (increment-clock (- ,end ,start))
+       ,result)))
+
+
+(defun clocking-read-event ()
+  (iterate (thereis (clocking (boots:read-event 1/4)))
+           (boots:blit)))
+
+
 ;;;; Title --------------------------------------------------------------------
 (define-state title
   (boots:with-layer (:height (length *asset-title*)
@@ -57,6 +82,7 @@
       (boots:canvas () 'draw-loading-screen)
     (boots:blit)
     (progn
+      (setf *current-time* (local-time:now))
       (init-messages)
       (clear-entities)
       (load-terrain))
@@ -99,9 +125,16 @@
 
 
 ;;;; Game Loop ----------------------------------------------------------------
+(defparameter *clock-format* '(:hour12 ":" (:min 2 #\0) " " :ampm))
+(defparameter *time-speed* 120)
+
+(defun clock-string ()
+  (string-upcase (local-time:format-timestring
+                   nil *current-time* :format *clock-format*)))
+
 (defun draw-hud (canvas)
   (boots:clear canvas)
-  (let ((time-string (format nil "TIME: 00:00"))
+  (let ((time-string (clock-string))
         (cash-string (format nil "$2,300"))
         (carrying-string (when-let ((object (carrier/holding *player*)))
                            (format nil "CARRYING: ~A" (flavor/name object))))
@@ -247,7 +280,7 @@
   (boots:blit)
 
   (nest
-    (let ((direction (parse-input-select-direction (boots:read-event)))))
+    (let ((direction (parse-input-select-direction (clocking-read-event)))))
     (if (null direction)
       (message "Nevermind."))
 
@@ -272,7 +305,7 @@
   (boots:blit)
 
   (nest
-    (let ((direction (parse-input-select-direction (boots:read-event)))))
+    (let ((direction (parse-input-select-direction (clocking-read-event)))))
     (if (null direction)
       (message "Nevermind."))
 
@@ -288,24 +321,20 @@
       (message "You put down the ~A" <>))))
 
 
-(defun move-cursor-to-player ()
-  (move-cursor (loc/row *player*) (loc/col *player*)))
-
 (define-state game-loop ()
   (boots:with-layer () (game-ui)
     (iterate
-      (move-cursor-to-player)
+      (move-cursor (loc/row *player*) (loc/col *player*))
       (boots:blit)
-      (for event = (parse-input-main (boots:read-event)))
-      (case (first event)
+      (for command = (parse-input-main (clocking-read-event)))
+      (case (first command)
         (:quit (return-from game-loop))
         (:reload (ql:quickload :vintage :silent t))
         (:look (look!))
         (:get (get!))
         (:drop (drop!))
-        (:move (move-player (second event)))
+        (:move (move-player (second command)))
         (:help (show-help))))))
-
 
 
 ;;;; Main ---------------------------------------------------------------------
