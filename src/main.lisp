@@ -207,6 +207,8 @@
     "CONTROLS"
     ""
     "[hjklyubn/arrows] move"
+    "[g] get"
+    "[d] drop"
     "[L] look"
     "[?] help"
     "[q] quit"))
