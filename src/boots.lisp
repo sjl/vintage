@@ -254,9 +254,23 @@
 
 
 ;;;; Cursor -------------------------------------------------------------------
+(defun turn-off-cursor ()
+  (unless (null *cursor-row*) ; already off
+    (charms/ll:curs-set 0)
+    (setf *cursor-row* nil
+          *cursor-col* nil)))
+
+(defun ensure-cursor-visible ()
+  (when (null *cursor-row*)
+    (charms/ll:curs-set 1)))
+
+
 (defun move-cursor (canvas row col)
-  (setf *cursor-row* (+ (row canvas) row)
-        *cursor-col* (+ (col canvas) col)))
+  (if (null row)
+    (turn-off-cursor)
+    (progn (ensure-cursor-visible)
+           (setf *cursor-row* (+ (row canvas) row)
+                 *cursor-col* (+ (col canvas) col)))))
 
 
 ;;;; Blitting -----------------------------------------------------------------
@@ -274,7 +288,8 @@
 (defun blit ()
   (map nil #'blit% *layers*)
   (charms:update-panels)
-  (charms:move-cursor t *cursor-col* *cursor-row*)
+  (when *cursor-row*
+    (charms:move-cursor t *cursor-col* *cursor-row*))
   (charms:update))
 
 
@@ -371,10 +386,10 @@
      (charms:enable-non-blocking-mode t)
      (charms:enable-extra-keys t)
      (charms/ll:start-color)
-     ;; (charms/ll:curs-set 0)
      (charms:clear-window t)
 
      (set-dimensions)
+     (move-cursor t nil nil)
 
      (with-sane-debugger
        ,@body)))

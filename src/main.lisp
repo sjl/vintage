@@ -18,6 +18,9 @@
   (when footer
     (boots:draw canvas (1- (boots:height canvas)) (center canvas footer) footer)))
 
+(defun move-cursor (row col)
+  (setf *cursor-row* row *cursor-col* col))
+
 
 ;;;; Title --------------------------------------------------------------------
 (define-state title
@@ -127,10 +130,8 @@
 
 (defun draw-entities (canvas)
   (let ((*render-canvas* canvas))
-    (run-render))
-  (if *looking*
-    (boots:move-cursor canvas *look-row* *look-col*)
-    (boots:move-cursor canvas (loc/row *player*) (loc/col *player*))))
+    (run-render)
+    (boots:move-cursor canvas *cursor-row* *cursor-col*)))
 
 (defun draw-map (canvas)
   (boots:clear canvas)
@@ -220,6 +221,7 @@
   (boots:with-layer
       (:width 40 :height (+ 2 (length (word-wrap help-text 38)) 1))
       (boots:canvas () 'draw-help)
+    (move-cursor nil nil)
     (boots:blit)
     (boots:read-event)))
 
@@ -229,6 +231,7 @@
         (*look-row* (loc/row *player*))
         (*look-col* (loc/col *player*)))
     (iterate
+      (move-cursor *look-row* *look-col*)
       (boots:blit)
       (for event = (parse-input-look (boots:read-event)))
       (case (first event)
@@ -240,6 +243,7 @@
     (return-from get! (message "You are already carrying something.")))
 
   (message "Which direction?")
+  (move-cursor nil nil)
   (boots:blit)
 
   (nest
@@ -264,6 +268,7 @@
     (return-from drop! (message "You are not carrying anything.")))
 
   (message "Which direction?")
+  (move-cursor nil nil)
   (boots:blit)
 
   (nest
@@ -283,9 +288,13 @@
       (message "You put down the ~A" <>))))
 
 
+(defun move-cursor-to-player ()
+  (move-cursor (loc/row *player*) (loc/col *player*)))
+
 (define-state game-loop ()
   (boots:with-layer () (game-ui)
     (iterate
+      (move-cursor-to-player)
       (boots:blit)
       (for event = (parse-input-main (boots:read-event)))
       (case (first event)

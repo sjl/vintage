@@ -18,5 +18,9 @@
 
 
 (defvar *looking* nil)
+
 (defvar *look-row* nil)
 (defvar *look-col* nil)
+
+(defvar *cursor-row* nil)
+(defvar *cursor-col* nil)
