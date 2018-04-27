@@ -43,7 +43,7 @@
 
 
 (defun clocking-read-event ()
-  (iterate (thereis (clocking (boots:read-event 1/4)))
+  (iterate (thereis (clocking (boots:read-event 1/2)))
            (boots:blit)))
 
 
@@ -126,7 +126,7 @@
 
 ;;;; Game Loop ----------------------------------------------------------------
 (defparameter *clock-format* '(:hour12 ":" (:min 2 #\0) " " :ampm))
-(defparameter *time-speed* 120)
+(defparameter *time-speed* 20)
 
 (defun clock-string ()
   (string-upcase (local-time:format-timestring
@@ -254,7 +254,6 @@
   (boots:with-layer
       (:width 40 :height (+ 2 (length (word-wrap help-text 38)) 1))
       (boots:canvas () 'draw-help)
-    (move-cursor nil nil)
     (boots:blit)
     (boots:read-event)))
 
@@ -276,7 +275,6 @@
     (return-from get! (message "You are already carrying something.")))
 
   (message "Which direction?")
-  (move-cursor nil nil)
   (boots:blit)
 
   (nest
@@ -324,7 +322,7 @@
 (define-state game-loop ()
   (boots:with-layer () (game-ui)
     (iterate
-      (move-cursor (loc/row *player*) (loc/col *player*))
+      (move-cursor nil nil)
       (boots:blit)
       (for command = (parse-input-main (clocking-read-event)))
       (case (first command)

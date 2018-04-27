@@ -8,6 +8,7 @@
   (create-entity 'player
     :flavor/name "yourself"
     :renderable/glyph #\@
+    :renderable/attrs +bold+
     :loc/row row
     :loc/col col))
 
