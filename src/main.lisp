@@ -73,11 +73,15 @@
     (:sw (values  1 -1))
     (:se (values  1  1))))
 
+(defun resolve-direction (direction &optional
+                          (row (loc/row *player*)) (col (loc/col *player*)))
+  (multiple-value-bind (dr dc)
+      (direction-to-offsets direction)
+    (values (+ row dr)
+            (+ col dc))))
+
 (defun move-player (direction)
-  (nest
-    (multiple-value-bind (dr dc) (direction-to-offsets direction))
-    (let ((r (+ (loc/row *player*) dr))
-          (c (+ (loc/col *player*) dc))))
+  (multiple-value-bind (r c) (resolve-direction direction)
     (cond ((not (in-bounds-p r c))
            (message "You can't leave the shop unattended."))
           ((not (passablep r c))
@@ -85,10 +89,8 @@
           (t (move *player* r c)))))
 
 (defun move-look (direction)
-  (nest
-    (multiple-value-bind (dr dc) (direction-to-offsets direction))
-    (let ((r (+ *look-row* dr))
-          (c (+ *look-col* dc))))
+  (multiple-value-bind (r c)
+      (resolve-direction direction *look-row* *look-col*)
     (when (in-bounds-p r c)
       (setf *look-row* r *look-col* c))))
 
@@ -98,9 +100,13 @@
   (boots:clear canvas)
   (let ((time-string (format nil "TIME: 00:00"))
         (cash-string (format nil "$2,300"))
+        (carrying-string (when-let ((object (carrier/holding *player*)))
+                           (format nil "CARRYING: ~A" (flavor/name object))))
         (w (boots:width canvas)))
     (boots:draw canvas 0 0 time-string)
-    (boots:draw canvas 0 (- w (length cash-string)) cash-string)))
+    (boots:draw canvas 0 (- w (length cash-string)) cash-string)
+    (when carrying-string
+      (boots:draw canvas 1 0 carrying-string))))
 
 (defun draw-messages (canvas)
   (boots:clear canvas)
@@ -156,7 +162,7 @@
       (boots:shelf ()
         (boots:canvas (:width 1) (curry #'boots:fill #\│))
         (boots:stack ()
-          (boots:canvas (:height 1) 'draw-hud)
+          (boots:canvas (:height 2) 'draw-hud)
           (boots:canvas () 'draw-messages))))))
 
 
@@ -173,13 +179,21 @@
 
 (defun parse-input-main (event)
   (case event
+    ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
+     (list :move (event-to-direction event)))
     (#\q '(:quit))
     (#\L '(:look))
     (#\R '(:reload))
-    ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
-     (list :move (event-to-direction event)))
+    (#\g '(:get))
+    (#\d '(:drop))
     (#\? '(:help))
     (t (message (structural-string event)) nil)))
+
+(defun parse-input-select-direction (event)
+  (case event
+    ((#\h #\j #\k #\l #\y #\u #\b #\n :up :down :left :right)
+     (event-to-direction event))
+    (t nil)))
 
 (defun parse-input-look (event)
   (case event
@@ -208,7 +222,7 @@
     (boots:read-event)))
 
 
-(defun look ()
+(defun look! ()
   (let ((*looking* t)
         (*look-row* (loc/row *player*))
         (*look-col* (loc/col *player*)))
@@ -217,7 +231,55 @@
       (for event = (parse-input-look (boots:read-event)))
       (case (first event)
         (:move (move-look (second event)))
-        (t (return-from look))))))
+        (t (return-from look!))))))
+
+(defun get! ()
+  (when (carrier/holding *player*)
+    (return-from get! (message "You are already carrying something.")))
+
+  (message "Which direction?")
+  (boots:blit)
+
+  (nest
+    (let ((direction (parse-input-select-direction (boots:read-event)))))
+    (if (null direction)
+      (message "Nevermind."))
+
+    (multiple-value-bind (r c) (resolve-direction direction))
+    (if (not (in-bounds-p r c))
+      (message "You can't get anything from there."))
+
+    (let ((objects (remove-if-not #'carryable? (entities-at r c)))))
+    (if (null objects)
+      (message "There's nothing to get there."))
+
+    (let ((target (first objects))))
+    (progn (pick-up *player* target)
+           (message "You pick up the ~A" (flavor/name target)))))
+
+(defun drop! ()
+  (unless (carrier/holding *player*)
+    (return-from drop! (message "You are not carrying anything.")))
+
+  (message "Which direction?")
+  (boots:blit)
+
+  (nest
+    (let ((direction (parse-input-select-direction (boots:read-event)))))
+    (if (null direction)
+      (message "Nevermind."))
+
+    (multiple-value-bind (r c) (resolve-direction direction))
+    (if (not (in-bounds-p r c))
+      (message "You can't put something there."))
+
+    (if (not (passablep r c))
+      (message "There's something in the way."))
+
+    (-<> (put-down *player* r c)
+      flavor/name
+      (message "You put down the ~A" <>))))
+
 
 (define-state game-loop ()
   (boots:with-layer () (game-ui)
@@ -227,7 +289,9 @@
       (case (first event)
         (:quit (return-from game-loop))
         (:reload (ql:quickload :vintage :silent t))
-        (:look (look))
+        (:look (look!))
+        (:get (get!))
+        (:drop (drop!))
         (:move (move-player (second event)))
         (:help (show-help))))))
 

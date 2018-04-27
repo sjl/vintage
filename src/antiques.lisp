@@ -26,7 +26,7 @@
 
 
 ;;;; Vase ---------------------------------------------------------------------
-(define-entity vase (loc flavor renderable antique solid))
+(define-entity vase (loc flavor renderable antique solid carryable))
 
 (chancery:define-rule vase-color
   :blue
@@ -52,7 +52,7 @@
         :renderable/glyph #\v
         :renderable/color screen-color
         :renderable/attrs (or screen-attrs 0)
-        :antique/date (random-date)
+        :antique/manufactured (random-date)
         :antique/color color
         :antique/material material
         :antique/condition (random-range 0.0 1.0)))))

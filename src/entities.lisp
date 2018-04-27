@@ -2,7 +2,7 @@
 
 
 ;;;; Player -------------------------------------------------------------------
-(define-entity player (loc renderable solid flavor))
+(define-entity player (loc renderable solid flavor carrier))
 
 (defun make-player (row col)
   (create-entity 'player
@@ -46,6 +46,7 @@
     :loc/row row
     :loc/col col))
 
+
 ;;;; Toilet -------------------------------------------------------------------
 (define-entity toilet (loc renderable flavor))
 
@@ -56,6 +57,7 @@
     :loc/row row
     :loc/col col))
 
+
 ;;;; Sink ---------------------------------------------------------------------
 (define-entity sink (loc renderable solid flavor))
 
@@ -65,6 +67,7 @@
     :renderable/glyph #\O
     :loc/row row
     :loc/col col))
+
 
 ;;;; Stairs -------------------------------------------------------------------
 (define-entity stairs (loc renderable flavor))

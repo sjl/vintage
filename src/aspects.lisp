@@ -76,9 +76,34 @@
   (name :type string))
 
 
+;;;; Carrying -----------------------------------------------------------------
+(define-aspect carryable)
+
+(define-aspect carrier
+  (holding :initform nil :type (or null (and loc carryable))))
+
+(define-with-macro (carrier :conc-name carrier/) holding)
+
+(defun pick-up (carrier carryable)
+  (with-carrier (carrier)
+    (assert (null holding) ()
+      "Carrier ~S cannot pick up ~S because it is already holding ~S."
+      carrier carryable holding)
+    (move carryable nil nil)
+    (setf holding carryable)))
+
+(defun put-down (carrier row col)
+  (with-carrier (carrier)
+    (assert (not (null holding)) ()
+      "Carrier ~S is not holding anything to put down." carrier)
+    (prog1 holding
+      (move holding row col)
+      (setf holding nil))))
+
+
 ;;;; Antique ------------------------------------------------------------------
 (define-aspect antique
   (condition :type (single-float 0.0 1.0))
   (color :type keyword)
   (material :type keyword)
-  (date :type local-time:timestamp))
+  (manufactured :type local-time:timestamp))

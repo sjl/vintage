@@ -35,11 +35,14 @@
                (message-prev head) nil)))
     (decf size)))
 
-(defun message (string)
-  (when (> (append-message *messages* (aesthetic-string string))
-           *messages-limit*)
-    (pop-message *messages*))
-  string)
+(defun message (string &rest format-args)
+  (let ((string (if format-args
+                  (apply #'format nil string format-args)
+                  string)))
+    (when (> (append-message *messages* (aesthetic-string string))
+             *messages-limit*)
+      (pop-message *messages*))
+    string))
 
 (defmacro-driver (FOR var IN-MESSAGE-LOG message-log)
   (let ((kwd (if generate 'generate 'for)))
