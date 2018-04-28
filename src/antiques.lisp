@@ -12,30 +12,19 @@
 
 
 ;;;; Colors -------------------------------------------------------------------
-(defun to-screen-color (color)
-  (ecase color
-    (:red +red-black+)
-    (:green +green-black+)
-    (:blue +blue-black+)
-    (:yellow (values +yellow-black+ +bold+))
-    (:gold (values +yellow-black+ +bold+))
-    (:brown +yellow-black+)
-    (:pink +pink-black+)
-    (:white (values +white-black+ +bold+))
-    (:purple +blue-black+)))
+(defun to-screen-color (material)
+  (ecase material
+    (:ceramic (values +white-black+ +bold+))
+    (:glass +cyan-black+)
+    (:steel +white-black+)
+    (:bronze +yellow-black+)))
 
 
 ;;;; Vase ---------------------------------------------------------------------
 (define-entity vase (loc flavor renderable antique solid carryable containable))
 
 
-(chancery:define-rule vase-color
-  :blue
-  :red
-  :white
-  :gold)
-
-(chancery:define-rule (vase-material :distribution :zipf)
+(chancery:define-rule (vase-material :distribution (:zipf :exponent 1.5))
   :ceramic
   :glass
   :steel
@@ -43,19 +32,17 @@
 
 
 (defun make-vase (row col)
-  (let ((color (vase-color))
-        (material (vase-material)))
+  (let ((material (vase-material)))
     (multiple-value-bind (screen-color screen-attrs)
-        (to-screen-color color)
+        (to-screen-color material)
       (create-entity 'vase
         :loc/row row
         :loc/col col
-        :flavor/name (format nil "~(~A ~A vase~)" color material)
+        :flavor/name (format nil "~(~A vase~)" material)
         :renderable/glyph #\v
         :renderable/color screen-color
         :renderable/attrs (or screen-attrs 0)
         :antique/manufactured (random-date)
-        :antique/color color
         :antique/material material
         :antique/condition (random-range 0.0 1.0)))))
 
