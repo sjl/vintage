@@ -2,17 +2,19 @@
 
 
 ;;;; Player -------------------------------------------------------------------
-(define-entity player (loc renderable solid flavor carrier))
+(define-entity player (loc renderable solid flavor carrier purse))
 
 (defun make-player (row col)
   (create-entity 'player
     :flavor/name "yourself"
     :flavor/article :none
     :renderable/glyph #\@
+    :renderable/fg-color +black+
+    :renderable/bg-color +white+
     :renderable/attrs +bold+
+    :purse/dollars 2000
     :loc/row row
     :loc/col col))
-
 
 ;;;; Cash Register ------------------------------------------------------------
 (define-entity cash-register (loc renderable solid flavor))
@@ -105,6 +107,12 @@
     :renderable/fg-color +yellow+
     :loc/row row
     :loc/col col))
+
+
+(defmethod renderp ((entity door))
+  (with-loc entity
+    (let ((other (find entity (entities-at row col) :test-not #'eql)))
+      (not other))))
 
 
 ;;;; Window -------------------------------------------------------------------

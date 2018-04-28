@@ -27,6 +27,9 @@
             (#\C (make-computer row col))
             (#\u (make-toilet row col))
             (#\= (make-door row col))
+            (#\E
+             (push (cons row col) *entrances*)
+             (make-door row col))
             (#\~ (make-window row col))
             (#\O (make-sink row col))
             (#\L (make-chair row col))
@@ -40,7 +43,8 @@
 (defun load-terrain ()
   (setf *map-height* (length *asset-map*)
         *map-width* (length (first *asset-map*))
-        *terrain* (make-array *map-height* :initial-contents *asset-map*))
+        *terrain* (make-array *map-height* :initial-contents *asset-map*)
+        *entrances* nil)
   (initialize-locations) ; shitty
   (load-terrain-entities)
   t)
@@ -61,3 +65,8 @@
   (and (terrain-passable-p row col)
        (not (solid-at-p row col))))
 
+
+(defun free-entrances ()
+  (iterate (for (row . col) :in *entrances*)
+           (if (passablep row col)
+             (collect (cons row col)))))

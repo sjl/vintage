@@ -23,6 +23,16 @@
 
 
 ;;;; Time ---------------------------------------------------------------------
+(defun tick-once ()
+  (map-entities #'tick 'ticking)
+  t)
+
+(defun tick-world ()
+  (multiple-value-bind (ticks remainder)
+      (truncate *since-last-tick* *time-per-tick*)
+    (do-repeat ticks (tick-once))
+    (setf *since-last-tick* remainder)))
+
 (defun to-nsec (internal-time-units)
   (-<> internal-time-units
     (/ <> internal-time-units-per-second) ; seconds
@@ -31,7 +41,8 @@
 
 (defun increment-clock (internal-time-units)
   (timestamp-incf *current-time* (* *time-speed* (to-nsec internal-time-units))
-                  :nsec))
+                  :nsec)
+  (incf *since-last-tick* internal-time-units))
 
 (defmacro clocking (&body body)
   (with-gensyms (start result end)
@@ -41,9 +52,9 @@
        (increment-clock (- ,end ,start))
        ,result)))
 
-
 (defun clocking-read-event ()
   (iterate (thereis (clocking (boots:read-event 1/2)))
+           (tick-world)
            (boots:blit)))
 
 
@@ -82,10 +93,12 @@
       (boots:canvas () 'draw-loading-screen)
     (boots:blit)
     (progn
-      (setf *current-time* (local-time:now))
+      (setf *current-time* (local-time:now)
+            *since-last-tick* 0)
       (init-messages)
       (clear-entities)
       (load-terrain)
+      (generate-mobs)
       (message "Press [?] for help."))
     (sleep 1/5)
     (transition game-loop)))
@@ -136,7 +149,7 @@
 (defun draw-hud (canvas)
   (boots:clear canvas)
   (let ((time-string (clock-string))
-        (cash-string (format nil "$2,300"))
+        (cash-string (format nil "$~:D" (purse/dollars *player*)))
         (carrying-string (when-let ((object (carrier/holding *player*)))
                            (format nil "CARRYING: ~A" (flavor/name object))))
         (w (boots:width canvas)))

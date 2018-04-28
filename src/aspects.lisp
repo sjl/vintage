@@ -2,8 +2,8 @@
 
 ;;;; Location -----------------------------------------------------------------
 (define-aspect loc
-  (row :type (or null (integer 0)))
-  (col :type (or null (integer 0))))
+  (row :type (or null (integer 0)) :initform nil)
+  (col :type (or null (integer 0)) :initform nil))
 
 (defmacro with-loc (entity-and-symbols &body body)
   (destructuring-bind (entity &optional (row-symbol 'row) (col-symbol 'col))
@@ -67,13 +67,19 @@
 
 (defun render (entity)
   (check-type entity renderable)
-  (nest
-    (with-loc entity)
-    (when row)
-    (multiple-value-bind (glyph fg bg attrs) (rendering-data entity))
-    (with-color (*render-canvas* fg bg attrs))
-    (boots:draw *render-canvas* row col
-                (string glyph))))
+  (when (renderp entity)
+    (nest
+      (with-loc entity)
+      (when row)
+      (multiple-value-bind (glyph fg bg attrs) (rendering-data entity))
+      (with-color (*render-canvas* fg bg attrs))
+      (boots:draw *render-canvas* row col
+                  (string glyph)))))
+
+(defgeneric renderp (entity))
+
+(defmethod renderp ((entity renderable))
+  t)
 
 
 ;;;; Solid --------------------------------------------------------------------
@@ -158,3 +164,30 @@
   (check-type object containable)
   (assert (containsp container object))
   (removef (container/contents container) object))
+
+
+;;;; Purse --------------------------------------------------------------------
+(define-aspect purse
+  (dollars :type (integer 0)))
+
+
+;;;; Ticking ------------------------------------------------------------------
+(define-aspect ticking)
+
+(defgeneric tick (entity))
+
+
+;;;; Brain --------------------------------------------------------------------
+(define-aspect brain
+  (state :type keyword :initform :start))
+
+(defgeneric brain-state! (entity state))
+
+(defun act (entity)
+  (message (brain/state entity))
+  (brain-state! entity (brain/state entity)))
+
+(defun transition-brain (entity state &optional immediately)
+  (setf (brain/state entity) state)
+  (when immediately
+    (funcall #'brain-state! entity state)))

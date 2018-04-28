@@ -51,6 +51,5 @@
        (unwind-protect
            (progn
              (charms/ll:wattron ,window ,attrs)
-             (message ,attrs)
              ,@body)
          (charms/ll:wattroff ,window ,attrs)))))

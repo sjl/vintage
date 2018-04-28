@@ -32,6 +32,7 @@
      (:file "aspects")
      (:file "entities")
      (:file "antiques")
+     (:file "mobs")
      (:file "messages")
      (:file "terrain")
      (:file "main")))))

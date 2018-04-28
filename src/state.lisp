@@ -26,6 +26,8 @@
 (defvar *cursor-col* nil)
 
 (defvar *current-time* nil)
+(defvar *since-last-tick* nil)
+(defparameter *time-per-tick*
+  (* 1 internal-time-units-per-second))
 
-(defparameter *tick-time*
-  (* 1))
+(defvar *entrances* nil)

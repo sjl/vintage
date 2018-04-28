@@ -12,6 +12,12 @@
   (head nil :type (or null message))
   (tail nil :type (or null message)))
 
+(defmethod print-object ((o message) s)
+  (print-unreadable-object (o s :type t :identity t)))
+
+(defmethod print-object ((o message-log) s)
+  (print-unreadable-object (o s :type t :identity t)))
+
 (define-with-macro message-log size head tail)
 
 (defun init-messages ()
@@ -29,7 +35,7 @@
 (defun pop-message (message-log)
   (with-message-log (message-log)
     (case size
-      (0 (error "Cannoy pop from empty message log."))
+      (0 (error "Cannot pop from empty message log."))
       (1 (setf head nil tail nil))
       (t (setf head (message-next head)
                (message-prev head) nil)))
