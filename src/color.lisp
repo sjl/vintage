@@ -1,41 +1,56 @@
 (in-package :vintage)
 
+(deftype color ()
+  '(integer 0 7))
 
-(defmacro defcolors (&rest colors)
-  `(progn
-    ,@(iterate (for n :from 0)
-               (for (constant nil nil) :in colors)
-               (collect `(defconstant ,constant ,n)))
-    (defun init-colors ()
-      ,@(iterate
-          (for (constant fg bg) :in colors)
-          (collect `(charms/ll:init-pair ,constant ,fg ,bg))))))
+(deftype color-pair ()
+  '(unsigned-byte 6))
 
-(defcolors
-  (+white-black+  charms/ll:COLOR_WHITE   charms/ll:COLOR_BLACK)
-  (+blue-black+   charms/ll:COLOR_BLUE    charms/ll:COLOR_BLACK)
-  (+cyan-black+   charms/ll:COLOR_CYAN    charms/ll:COLOR_BLACK)
-  (+yellow-black+ charms/ll:COLOR_YELLOW  charms/ll:COLOR_BLACK)
-  (+green-black+  charms/ll:COLOR_GREEN   charms/ll:COLOR_BLACK)
-  (+red-black+    charms/ll:COLOR_RED     charms/ll:COLOR_BLACK)
-  (+pink-black+   charms/ll:COLOR_MAGENTA charms/ll:COLOR_BLACK)
-
-  (+black-white+  charms/ll:COLOR_BLACK charms/ll:COLOR_WHITE)
-  (+black-blue+   charms/ll:COLOR_BLACK charms/ll:COLOR_BLUE)
-  (+black-cyan+   charms/ll:COLOR_BLACK charms/ll:COLOR_CYAN)
-  (+black-yellow+ charms/ll:COLOR_BLACK charms/ll:COLOR_YELLOW)
-  (+black-green+  charms/ll:COLOR_BLACK charms/ll:COLOR_GREEN)
-  (+black-red+    charms/ll:COLOR_BLACK charms/ll:COLOR_RED)
-  (+black-pink+   charms/ll:COLOR_BLACK charms/ll:COLOR_MAGENTA))
+(defconstant +black+   0)
+(defconstant +white+   1)
+(defconstant +blue+    2)
+(defconstant +cyan+    3)
+(defconstant +yellow+  4)
+(defconstant +green+   5)
+(defconstant +red+     6)
+(defconstant +magenta+ 7)
 
 (defconstant +bold+ charms/ll:A_BOLD)
 
-(defmacro with-color ((canvas color &rest attributes) &body body)
+(defparameter *colors*
+  `((,+black+   ,charms/ll:COLOR_BLACK)
+    (,+white+   ,charms/ll:COLOR_WHITE)
+    (,+blue+    ,charms/ll:COLOR_BLUE)
+    (,+cyan+    ,charms/ll:COLOR_CYAN)
+    (,+yellow+  ,charms/ll:COLOR_YELLOW)
+    (,+green+   ,charms/ll:COLOR_GREEN)
+    (,+red+     ,charms/ll:COLOR_RED)
+    (,+magenta+ ,charms/ll:COLOR_MAGENTA)))
+
+(declaim (ftype (function (color color) color-pair) colors-to-pair-number))
+(defun colors-to-pair-number (fg bg)
+  (declare (optimize speed (debug 1) (safety 1)))
+  (logior (ash fg 3) bg))
+
+(defun initialize-colors ()
+  (assert (>= charms/ll:*color-pairs* (expt 2 6)) ()
+    "Terminal does not support enough colors.")
+  (iterate
+    (for (fg fg-constant) :in *colors*)
+    (iterate
+      (for (bg bg-constant) :in *colors*)
+      (charms/ll:init-pair (colors-to-pair-number fg bg)
+                           fg-constant
+                           bg-constant))))
+
+(defmacro with-color ((canvas fg bg &rest attributes) &body body)
   (with-gensyms (window attrs)
-    `(let ((,attrs (logior (charms/ll:color-pair ,color) ,@attributes))
+    `(let ((,attrs (logior (charms/ll:color-pair (colors-to-pair-number ,fg ,bg))
+                           ,@attributes))
            (,window (charms::window-pointer (boots::window ,canvas))))
        (unwind-protect
            (progn
              (charms/ll:wattron ,window ,attrs)
+             (message ,attrs)
              ,@body)
          (charms/ll:wattroff ,window ,attrs)))))

@@ -415,7 +415,7 @@
 (defun run ()
   (setf *random-state* (make-random-state t))
   (boots:with-boots
-    (init-colors)
+    (initialize-colors)
     (let ((boots:*global-input-hook* 'global-input-hook))
       (title))))
 

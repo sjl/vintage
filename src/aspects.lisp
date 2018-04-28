@@ -52,15 +52,17 @@
 ;;;; Renderable ---------------------------------------------------------------
 (define-aspect renderable
   (glyph :type character)
-  (color :type fixnum :initform +white-black+)
-  (attrs :type (integer 0) :initform 0))
+  (attrs :type (integer 0) :initform 0)
+  (fg-color :type color :initform +white+)
+  (bg-color :type color :initform +black+))
 
 
 (defgeneric rendering-data (entity))
 
 (defmethod rendering-data ((entity renderable))
   (values (renderable/glyph entity)
-          (renderable/color entity)
+          (renderable/fg-color entity)
+          (renderable/bg-color entity)
           (renderable/attrs entity)))
 
 (defun render (entity)
@@ -68,8 +70,8 @@
   (nest
     (with-loc entity)
     (when row)
-    (multiple-value-bind (glyph color attrs) (rendering-data entity))
-    (with-color (*render-canvas* color attrs))
+    (multiple-value-bind (glyph fg bg attrs) (rendering-data entity))
+    (with-color (*render-canvas* fg bg attrs))
     (boots:draw *render-canvas* row col
                 (string glyph))))
 

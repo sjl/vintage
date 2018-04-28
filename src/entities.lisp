@@ -21,7 +21,7 @@
   (create-entity 'cash-register
     :flavor/name "old cash register"
     :renderable/glyph #\$
-    :renderable/color +yellow-black+
+    :renderable/fg-color +yellow+
     :renderable/attrs +bold+
     :loc/row row
     :loc/col col))
@@ -34,7 +34,8 @@
   (create-entity 'table
     :flavor/name "wooden table"
     :renderable/glyph #\space
-    :renderable/color +black-yellow+
+    :renderable/fg-color +black+
+    :renderable/bg-color +yellow+
     :container/capacity 1
     :container/on-or-in "on"
     :loc/row row
@@ -44,7 +45,8 @@
   (if-let ((object (first (container/contents table))))
     (values
       (renderable/glyph object)
-      (renderable/color table)
+      (renderable/fg-color object)
+      (renderable/bg-color table)
       (renderable/attrs object))
     (call-next-method)))
 
@@ -89,6 +91,41 @@
     :flavor/name "stairs to your loft"
     :flavor/article :definite
     :renderable/glyph #\<
+    :loc/row row
+    :loc/col col))
+
+
+;;;; Door ---------------------------------------------------------------------
+(define-entity door (loc renderable flavor))
+
+(defun make-door (row col)
+  (create-entity 'door
+    :flavor/name "door"
+    :renderable/glyph #\=
+    :renderable/fg-color +yellow+
+    :loc/row row
+    :loc/col col))
+
+
+;;;; Window -------------------------------------------------------------------
+(define-entity window (loc renderable flavor solid))
+
+(defun make-window (row col)
+  (create-entity 'window
+    :flavor/name "window"
+    :renderable/glyph #\~
+    :renderable/fg-color +blue+
+    :loc/row row
+    :loc/col col))
+
+
+;;;; Window -------------------------------------------------------------------
+(define-entity chair (loc renderable flavor))
+
+(defun make-chair (row col)
+  (create-entity 'chair
+    :flavor/name "office chair"
+    :renderable/glyph #\L
     :loc/row row
     :loc/col col))
 

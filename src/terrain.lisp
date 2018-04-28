@@ -1,6 +1,5 @@
 (in-package :vintage)
 
-;;;; Code ---------------------------------------------------------------------
 (defun terrain (row col)
   (aref (aref *terrain* row) col))
 
@@ -27,39 +26,16 @@
             (#\t (make-table row col))
             (#\C (make-computer row col))
             (#\u (make-toilet row col))
+            (#\= (make-door row col))
+            (#\~ (make-window row col))
             (#\O (make-sink row col))
+            (#\L (make-chair row col))
             (#\< (make-stairs row col))
             (#\A (generate-antique row col)))
       (setf cell #\Space))))
 
-
-(defun cell-color (char)
-  (case char
-    (#\= +yellow-black+)
-    (#\~ +blue-black+)))
-
-(defun cell-attrs (char)
-  (case char
-    (t 0)))
-
-(defun load-terrain-colors ()
-  (setf *terrain-colors* nil)
-  (do-terrain (cell row col)
-    (when-let ((color (cell-color cell)))
-      (push (list row col color (cell-attrs cell))
-            *terrain-colors*))))
-
-(defun color-terrain (canvas)
-  ;; this sucks
-  (iterate (for (row col color attrs) :in *terrain-colors*)
-           (charms/ll:mvwchgat (charms::window-pointer (boots::window canvas))
-                               row col 1 attrs color (cffi:null-pointer))))
-
-
 (defun draw-terrain (canvas)
-  (draw-lines canvas *terrain* 0 0)
-  (color-terrain canvas))
-
+  (draw-lines canvas *terrain* 0 0))
 
 (defun load-terrain ()
   (setf *map-height* (length *asset-map*)
@@ -67,7 +43,6 @@
         *terrain* (make-array *map-height* :initial-contents *asset-map*))
   (initialize-locations) ; shitty
   (load-terrain-entities)
-  (load-terrain-colors)
   t)
 
 
@@ -77,7 +52,7 @@
 
 
 (defun terrain-passable-p (row col)
-  (ensure-boolean (position (terrain row col) " =Lu<")))
+  (eql #\space (terrain row col)))
 
 (defun solid-at-p (row col)
   (ensure-boolean (find-if #'solid? (entities-at row col))))

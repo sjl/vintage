@@ -14,10 +14,10 @@
 ;;;; Colors -------------------------------------------------------------------
 (defun to-screen-color (material)
   (ecase material
-    (:ceramic (values +white-black+ +bold+))
-    (:glass +cyan-black+)
-    (:steel +white-black+)
-    (:bronze +yellow-black+)))
+    (:ceramic (values +white+ +bold+))
+    (:glass +cyan+)
+    (:steel +white+)
+    (:bronze +yellow+)))
 
 
 ;;;; Vase ---------------------------------------------------------------------
@@ -40,7 +40,7 @@
         :loc/col col
         :flavor/name (format nil "~(~A vase~)" material)
         :renderable/glyph #\v
-        :renderable/color screen-color
+        :renderable/fg-color screen-color
         :renderable/attrs (or screen-attrs 0)
         :antique/manufactured (random-date)
         :antique/material material
