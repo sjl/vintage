@@ -6,14 +6,14 @@
 
                :compose
                :curry
-               :once-only
-               :rcurry
-               :symb
-               :with-gensyms
+               :deletef
                :ensure-boolean
                :ensure-list
-               :deletef
+               :once-only
+               :rcurry
                :removef
+               :symb
+               :with-gensyms
 
                )
   :package "VINTAGE.QUICKUTILS")

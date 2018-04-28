@@ -20,8 +20,12 @@
   ;; http://www.gigamonkeys.com/book/a-few-format-recipes.html
   (format nil "~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, and ~:;, ~]~}~]~}" list))
 
-
 (define-modify-macro timestamp-incf (amount unit) local-time:timestamp+)
+
+
+(defun chebyshev-distance (r1 c1 r2 c2)
+  (max (abs (- r1 r2))
+       (abs (- c1 c2))))
 
 
 ;;;; State Machines -----------------------------------------------------------

@@ -18,7 +18,7 @@
            ,@body)))))
 
 
-(defun load-terrain-entities ()
+(defun process-terrain ()
   (do-terrain (cell row col)
     (when (case cell
             (#\@ (setf *player* (make-player row col)))
@@ -27,9 +27,9 @@
             (#\C (make-computer row col))
             (#\u (make-toilet row col))
             (#\= (make-door row col))
-            (#\E
-             (push (cons row col) *entrances*)
-             (make-door row col))
+            (#\E (progn (push (cons row col) *entrances*)
+                        (make-door row col)))
+            (#\R (setf *in-front-of-register* (cons row col)))
             (#\~ (make-window row col))
             (#\O (make-sink row col))
             (#\L (make-chair row col))
@@ -46,7 +46,7 @@
         *terrain* (make-array *map-height* :initial-contents *asset-map*)
         *entrances* nil)
   (initialize-locations) ; shitty
-  (load-terrain-entities)
+  (process-terrain)
   t)
 
 
@@ -70,3 +70,9 @@
   (iterate (for (row . col) :in *entrances*)
            (if (passablep row col)
              (collect (cons row col)))))
+
+(defun neighbors (row col &key passable)
+  (iterate (for (r c) :within-radius 1 :origin (row col) :skip-origin t)
+           (when (and (in-bounds-p r c)
+                      (if passable (passablep r c) t))
+             (collect (cons r c)))))

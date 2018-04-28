@@ -40,6 +40,11 @@
   (when (in-loc-bounds-p row col)
     (aref *locations* row col)))
 
+(defun entity-at-p (entity row col)
+  (and (eql (loc/row entity) row)
+       (eql (loc/col entity) col)))
+
+
 (defmethod entity-created :after ((entity loc))
   (with-loc entity
     (when row (loc-insert entity))))
@@ -183,11 +188,10 @@
 
 (defgeneric brain-state! (entity state))
 
-(defun act (entity)
-  (message (brain/state entity))
-  (brain-state! entity (brain/state entity)))
-
 (defun transition-brain (entity state &optional immediately)
   (setf (brain/state entity) state)
   (when immediately
     (funcall #'brain-state! entity state)))
+
+(defun act (entity)
+  (brain-state! entity (brain/state entity)))

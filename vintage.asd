@@ -12,6 +12,7 @@
                :iterate
                :local-time
                :losh
+               :pileup
                :split-sequence
 
                )
@@ -27,6 +28,7 @@
     ((:file "boots")
      (:file "utils")
      (:file "wrap")
+     (:file "astar")
      (:file "color")
      (:file "state")
      (:file "aspects")

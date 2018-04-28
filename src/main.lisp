@@ -53,9 +53,10 @@
        ,result)))
 
 (defun clocking-read-event ()
-  (iterate (thereis (clocking (boots:read-event 1/2)))
+  (iterate (for event = (clocking (boots:read-event 1/4)))
            (tick-world)
-           (boots:blit)))
+           (boots:blit)
+           (thereis event)))
 
 
 ;;;; Title --------------------------------------------------------------------

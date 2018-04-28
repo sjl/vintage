@@ -29,12 +29,16 @@
 
 (defpackage :vintage.wrap
   (:use :cl :iterate :losh :vintage.quickutils)
-  (:export
-    :word-wrap))
+  (:export :word-wrap))
+
+(defpackage :vintage.astar
+  (:use :cl :iterate :losh :vintage.quickutils)
+  (:export :astar))
 
 (defpackage :vintage
   (:use :cl :iterate :losh :vintage.quickutils
     :beast
+    :vintage.astar
     :vintage.wrap)
   (:export
     :run

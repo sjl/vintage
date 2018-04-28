@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS :ENSURE-BOOLEAN :ENSURE-LIST :DELETEF :REMOVEF) :ensure-package T :package "VINTAGE.QUICKUTILS")
+;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :DELETEF :ENSURE-BOOLEAN :ENSURE-LIST :ONCE-ONLY :RCURRY :REMOVEF :SYMB :WITH-GENSYMS) :ensure-package T :package "VINTAGE.QUICKUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "VINTAGE.QUICKUTILS")
@@ -14,10 +14,10 @@
 
 (when (boundp '*utilities*)
   (setf *utilities* (union *utilities* '(:MAKE-GENSYM-LIST :ENSURE-FUNCTION
-                                         :COMPOSE :CURRY :ONCE-ONLY :RCURRY
-                                         :MKSTR :SYMB :STRING-DESIGNATOR
-                                         :WITH-GENSYMS :ENSURE-BOOLEAN
-                                         :ENSURE-LIST :DELETEF :REMOVEF))))
+                                         :COMPOSE :CURRY :DELETEF
+                                         :ENSURE-BOOLEAN :ENSURE-LIST
+                                         :ONCE-ONLY :RCURRY :REMOVEF :MKSTR
+                                         :SYMB :STRING-DESIGNATOR :WITH-GENSYMS))))
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-gensym-list (length &optional (x "G"))
     "Returns a list of `length` gensyms, each generated as if with a call to `make-gensym`,
@@ -91,6 +91,28 @@ it is called with to `function`."
            (apply ,fun ,@curries more)))))
   
 
+  (declaim (inline delete/swapped-arguments))
+  (defun delete/swapped-arguments (sequence item &rest keyword-arguments)
+    (apply #'delete item sequence keyword-arguments))
+
+  (define-modify-macro deletef (item &rest remove-keywords)
+    delete/swapped-arguments
+    "Modify-macro for `delete`. Sets place designated by the first argument to
+the result of calling `delete` with `item`, place, and the `keyword-arguments`.")
+  
+
+  (defun ensure-boolean (x)
+    "Convert `x` into a Boolean value."
+    (and x t))
+  
+
+  (defun ensure-list (list)
+    "If `list` is a list, it is returned. Otherwise returns the list designated by `list`."
+    (if (listp list)
+        list
+        (list list)))
+  
+
   (defmacro once-only (specs &body forms)
     "Evaluates `forms` with symbols specified in `specs` rebound to temporary
 variables, ensuring that each initform is evaluated only once.
@@ -138,6 +160,16 @@ with and `arguments` to `function`."
       (lambda (&rest more)
         (declare (dynamic-extent more))
         (multiple-value-call fn (values-list more) (values-list arguments)))))
+  
+
+  (declaim (inline remove/swapped-arguments))
+  (defun remove/swapped-arguments (sequence item &rest keyword-arguments)
+    (apply #'remove item sequence keyword-arguments))
+
+  (define-modify-macro removef (item &rest remove-keywords)
+    remove/swapped-arguments
+    "Modify-macro for `remove`. Sets place designated by the first argument to
+the result of calling `remove` with `item`, place, and the `keyword-arguments`.")
   
 
   (defun mkstr (&rest args)
@@ -200,40 +232,8 @@ The string-designator is used as the argument to `gensym` when constructing the
 unique symbol the named variable will be bound to."
     `(with-gensyms ,names ,@forms))
   
-
-  (defun ensure-boolean (x)
-    "Convert `x` into a Boolean value."
-    (and x t))
-  
-
-  (defun ensure-list (list)
-    "If `list` is a list, it is returned. Otherwise returns the list designated by `list`."
-    (if (listp list)
-        list
-        (list list)))
-  
-
-  (declaim (inline delete/swapped-arguments))
-  (defun delete/swapped-arguments (sequence item &rest keyword-arguments)
-    (apply #'delete item sequence keyword-arguments))
-
-  (define-modify-macro deletef (item &rest remove-keywords)
-    delete/swapped-arguments
-    "Modify-macro for `delete`. Sets place designated by the first argument to
-the result of calling `delete` with `item`, place, and the `keyword-arguments`.")
-  
-
-  (declaim (inline remove/swapped-arguments))
-  (defun remove/swapped-arguments (sequence item &rest keyword-arguments)
-    (apply #'remove item sequence keyword-arguments))
-
-  (define-modify-macro removef (item &rest remove-keywords)
-    remove/swapped-arguments
-    "Modify-macro for `remove`. Sets place designated by the first argument to
-the result of calling `remove` with `item`, place, and the `keyword-arguments`.")
-  
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (export '(compose curry once-only rcurry symb with-gensyms with-unique-names
-            ensure-boolean ensure-list deletef removef)))
+  (export '(compose curry deletef ensure-boolean ensure-list once-only rcurry
+            removef symb with-gensyms with-unique-names)))
 
 ;;;; END OF quickutils.lisp ;;;;
