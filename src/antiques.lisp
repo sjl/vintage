@@ -26,7 +26,8 @@
 
 
 ;;;; Vase ---------------------------------------------------------------------
-(define-entity vase (loc flavor renderable antique solid carryable))
+(define-entity vase (loc flavor renderable antique solid carryable containable))
+
 
 (chancery:define-rule vase-color
   :blue
@@ -40,6 +41,7 @@
   :steel
   :bronze)
 
+
 (defun make-vase (row col)
   (let ((color (vase-color))
         (material (vase-material)))
@@ -48,7 +50,7 @@
       (create-entity 'vase
         :loc/row row
         :loc/col col
-        :flavor/name (format nil "~(a ~A ~A vase~)" color material)
+        :flavor/name (format nil "~(~A ~A vase~)" color material)
         :renderable/glyph #\v
         :renderable/color screen-color
         :renderable/attrs (or screen-attrs 0)

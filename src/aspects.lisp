@@ -55,13 +55,20 @@
   (color :type fixnum :initform +white-black+)
   (attrs :type (integer 0) :initform 0))
 
-(define-with-macro (renderable :conc-name renderable/) glyph color attrs)
 
-(define-system render ((entity renderable loc))
+(defgeneric rendering-data (entity))
+
+(defmethod rendering-data ((entity renderable))
+  (values (renderable/glyph entity)
+          (renderable/color entity)
+          (renderable/attrs entity)))
+
+(defun render (entity)
+  (check-type entity renderable)
   (nest
     (with-loc entity)
     (when row)
-    (with-renderable (entity))
+    (multiple-value-bind (glyph color attrs) (rendering-data entity))
     (with-color (*render-canvas* color attrs))
     (boots:draw *render-canvas* row col
                 (string glyph))))
@@ -73,7 +80,15 @@
 
 ;;;; Flavor -------------------------------------------------------------------
 (define-aspect flavor
-  (name :type string))
+  (name :type string)
+  (article :type (member :definite :indefinite :none) :initform :indefinite))
+
+(defun name-with-article (object)
+  (let ((name (flavor/name object)))
+    (ecase (flavor/article object)
+      (:none name)
+      (:definite (concatenate 'string "the " name))
+      (:indefinite (chancery:a name)))))
 
 
 ;;;; Carrying -----------------------------------------------------------------
@@ -107,3 +122,38 @@
   (color :type keyword)
   (material :type keyword)
   (manufactured :type local-time:timestamp))
+
+
+;;;; Containable --------------------------------------------------------------
+(define-aspect containable)
+
+
+;;;; Container ----------------------------------------------------------------
+(define-aspect container
+  (contents :type list :initform nil)
+  (capacity :type (integer 1))
+  (on-or-in :type string))
+
+(defun fullp (container)
+  (= (length (container/contents container))
+     (container/capacity container)))
+
+(defun emptyp (container)
+  (zerop (length (container/contents container))))
+
+(defun containsp (container object)
+  (ensure-boolean (member object (container/contents container))))
+
+(defun place-in (container object)
+  (check-type container container)
+  (check-type object containable)
+  (assert (not (fullp container)))
+  (when (loc? object)
+    (move object nil nil))
+  (push object (container/contents container)))
+
+(defun remove-from (container object)
+  (check-type container container)
+  (check-type object containable)
+  (assert (containsp container object))
+  (removef (container/contents container) object))

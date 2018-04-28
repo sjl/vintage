@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS :ENSURE-BOOLEAN :ENSURE-LIST :DELETEF) :ensure-package T :package "VINTAGE.QUICKUTILS")
+;;;; (qtlc:save-utils-as "quickutils.lisp" :utilities '(:COMPOSE :CURRY :ONCE-ONLY :RCURRY :SYMB :WITH-GENSYMS :ENSURE-BOOLEAN :ENSURE-LIST :DELETEF :REMOVEF) :ensure-package T :package "VINTAGE.QUICKUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "VINTAGE.QUICKUTILS")
@@ -17,7 +17,7 @@
                                          :COMPOSE :CURRY :ONCE-ONLY :RCURRY
                                          :MKSTR :SYMB :STRING-DESIGNATOR
                                          :WITH-GENSYMS :ENSURE-BOOLEAN
-                                         :ENSURE-LIST :DELETEF))))
+                                         :ENSURE-LIST :DELETEF :REMOVEF))))
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-gensym-list (length &optional (x "G"))
     "Returns a list of `length` gensyms, each generated as if with a call to `make-gensym`,
@@ -222,8 +222,18 @@ unique symbol the named variable will be bound to."
     "Modify-macro for `delete`. Sets place designated by the first argument to
 the result of calling `delete` with `item`, place, and the `keyword-arguments`.")
   
+
+  (declaim (inline remove/swapped-arguments))
+  (defun remove/swapped-arguments (sequence item &rest keyword-arguments)
+    (apply #'remove item sequence keyword-arguments))
+
+  (define-modify-macro removef (item &rest remove-keywords)
+    remove/swapped-arguments
+    "Modify-macro for `remove`. Sets place designated by the first argument to
+the result of calling `remove` with `item`, place, and the `keyword-arguments`.")
+  
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (export '(compose curry once-only rcurry symb with-gensyms with-unique-names
-            ensure-boolean ensure-list deletef)))
+            ensure-boolean ensure-list deletef removef)))
 
 ;;;; END OF quickutils.lisp ;;;;

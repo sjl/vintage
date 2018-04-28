@@ -13,6 +13,7 @@
                :ensure-boolean
                :ensure-list
                :deletef
+               :removef
 
                )
   :package "VINTAGE.QUICKUTILS")

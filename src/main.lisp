@@ -163,7 +163,8 @@
 
 (defun draw-entities (canvas)
   (let ((*render-canvas* canvas))
-    (run-render)
+    (map-entities #'render 'renderable)
+    (render *player*)
     (boots:move-cursor canvas *cursor-row* *cursor-col*)))
 
 (defun draw-map (canvas)
@@ -176,9 +177,9 @@
   (when *looking*
     (when-let ((visible (-<> (entities-at *look-row* *look-col*)
                           (remove-if-not #'flavor? <>)
-                          (mapcar #'flavor/name <>))))
+                          (mapcar #'name-with-article <>))))
       (draw-lines canvas
-                  (word-wrap (list (format nil "You see ~A"
+                  (word-wrap (list (format nil "You see ~A."
                                            (english-list visible)))
                              (1- (boots:width canvas)))))))
 
@@ -220,6 +221,8 @@
     (#\R '(:reload))
     (#\g '(:get))
     (#\d '(:drop))
+    (#\p '(:place))
+    (#\t '(:take))
     (#\? '(:help))
     (t (message (structural-string event)) nil)))
 
@@ -243,6 +246,8 @@
     "[hjklyubn/arrows] move"
     "[g] get"
     "[d] drop"
+    "[p] place on/in"
+    "[t] take from"
     "[L] look"
     "[?] help"
     "[q] quit"))
@@ -299,7 +304,6 @@
     (return-from drop! (message "You are not carrying anything.")))
 
   (message "Which direction?")
-  (move-cursor nil nil)
   (boots:blit)
 
   (nest
@@ -309,14 +313,78 @@
 
     (multiple-value-bind (r c) (resolve-direction direction))
     (if (not (in-bounds-p r c))
-      (message "You can't put something there."))
+      (message "You can't drop something there."))
 
     (if (not (passablep r c))
       (message "There's something in the way."))
 
     (-<> (put-down *player* r c)
       flavor/name
-      (message "You put down the ~A" <>))))
+      (message "You drop the ~A." <>))))
+
+(defun place! ()
+  (let ((object (carrier/holding *player*)))
+    (cond
+      ((null object)
+       (return-from place! (message "You are not carrying anything.")))
+      ((not (containable? object))
+       (return-from place! (message "You can't put that on/in something else."))))
+
+    (message "Which direction?")
+    (boots:blit)
+
+    (nest
+      (let ((direction (parse-input-select-direction (clocking-read-event)))))
+      (if (null direction)
+        (message "Nevermind."))
+
+      (multiple-value-bind (r c) (resolve-direction direction))
+      (if (not (in-bounds-p r c))
+        (message "You can't put something there."))
+
+      (let ((container (first (remove-if-not #'container? (entities-at r c))))))
+      (if (not container)
+        (message "There's nothing to put it on (did you mean [d]rop)?"))
+
+      (if (fullp container)
+        (message "The ~A is full." (flavor/name container)))
+
+      (progn
+        (setf (carrier/holding *player*) nil) ; todo this sucks
+        (place-in container object)
+        (message "You put the ~A on the ~A."
+                 (flavor/name object)
+                 (flavor/name container))))))
+(defun take! ()
+  (when (carrier/holding *player*)
+    (return-from take! (message "You are already carrying something.")))
+
+  (message "Which direction?")
+  (boots:blit)
+
+  (nest
+    (let ((direction (parse-input-select-direction (clocking-read-event)))))
+    (if (null direction)
+      (message "Nevermind."))
+
+    (multiple-value-bind (r c) (resolve-direction direction))
+    (if (not (in-bounds-p r c))
+      (message "You can't take anything from there."))
+
+    (let ((container (first (remove-if-not #'container? (entities-at r c))))))
+    (if (not container)
+      (message "There's nothing to take from (did you mean [g]et)?"))
+
+    (if (emptyp container)
+      (message "The ~A is empty." (flavor/name container)))
+
+    (let ((object (first (container/contents container)))))
+    (progn
+      (pick-up *player* object)
+      (remove-from container object)
+      (message "You take the ~A from the ~A."
+               (flavor/name object)
+               (flavor/name container)))))
 
 
 (define-state game-loop ()
@@ -331,6 +399,8 @@
         (:look (look!))
         (:get (get!))
         (:drop (drop!))
+        (:place (place!))
+        (:take (take!))
         (:move (move-player (second command)))
         (:help (show-help))))))
 

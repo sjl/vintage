@@ -7,6 +7,7 @@
 (defun make-player (row col)
   (create-entity 'player
     :flavor/name "yourself"
+    :flavor/article :none
     :renderable/glyph #\@
     :renderable/attrs +bold+
     :loc/row row
@@ -18,7 +19,7 @@
 
 (defun make-cash-register (row col)
   (create-entity 'cash-register
-    :flavor/name "an old cash register"
+    :flavor/name "old cash register"
     :renderable/glyph #\$
     :renderable/color +yellow-black+
     :renderable/attrs +bold+
@@ -27,15 +28,25 @@
 
 
 ;;;; Tables -------------------------------------------------------------------
-(define-entity table (loc renderable solid flavor))
+(define-entity table (loc renderable solid flavor container carryable))
 
 (defun make-table (row col)
   (create-entity 'table
-    :flavor/name "a wooden table"
+    :flavor/name "wooden table"
     :renderable/glyph #\space
     :renderable/color +black-yellow+
+    :container/capacity 1
+    :container/on-or-in "on"
     :loc/row row
     :loc/col col))
+
+(defmethod rendering-data ((table table))
+  (if-let ((object (first (container/contents table))))
+    (values
+      (renderable/glyph object)
+      (renderable/color table)
+      (renderable/attrs object))
+    (call-next-method)))
 
 
 ;;;; Computer -----------------------------------------------------------------
@@ -53,7 +64,7 @@
 
 (defun make-toilet (row col)
   (create-entity 'toilet
-    :flavor/name "a toilet"
+    :flavor/name "toilet"
     :renderable/glyph #\u
     :loc/row row
     :loc/col col))
@@ -64,7 +75,7 @@
 
 (defun make-sink (row col)
   (create-entity 'sink
-    :flavor/name "a sink"
+    :flavor/name "sink"
     :renderable/glyph #\O
     :loc/row row
     :loc/col col))
@@ -75,7 +86,8 @@
 
 (defun make-stairs (row col)
   (create-entity 'stairs
-    :flavor/name "the stairs to your loft"
+    :flavor/name "stairs to your loft"
+    :flavor/article :definite
     :renderable/glyph #\<
     :loc/row row
     :loc/col col))
