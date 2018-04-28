@@ -85,7 +85,8 @@
       (setf *current-time* (local-time:now))
       (init-messages)
       (clear-entities)
-      (load-terrain))
+      (load-terrain)
+      (message "Press [?] for help."))
     (sleep 1/5)
     (transition game-loop)))
 
@@ -238,26 +239,24 @@
      (list :move (event-to-direction event)))))
 
 
-(defparameter help-text
-  '("Bump into things to interact with them."
+(defparameter *help-text*
+  '("Run your antique shop!"
     ""
-    "CONTROLS"
+    "Move around with the arrow keys or [hjklyubn].  Look around with [L]."
     ""
-    "[hjklyubn/arrows] move"
-    "[g] get"
-    "[d] drop"
-    "[p] place on/in"
-    "[t] take from"
-    "[L] look"
-    "[?] help"
-    "[q] quit"))
+    "You can [g]et and [d]rop things from the floor, and [p]lace and [t]ake things from tables or shelves."
+    ""
+    "Press [q] to quit.  Your game will not be saved (sorry)."))
+
+(defparameter *help-width* 60)
 
 (defun draw-help (canvas)
-  (popup canvas help-text "HELP" "Press any key"))
+  (popup canvas *help-text* "HELP" "Press any key"))
 
 (defun show-help ()
   (boots:with-layer
-      (:width 40 :height (+ 2 (length (word-wrap help-text 38)) 1))
+      (:width *help-width*
+       :height (+ 2 (length (word-wrap *help-text* (- *help-width* 2))) 1))
       (boots:canvas () 'draw-help)
     (boots:blit)
     (boots:read-event)))

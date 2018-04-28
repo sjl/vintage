@@ -4,7 +4,7 @@
 (defvar *locations* nil)
 (defvar *render-canvas* nil) ; todo rip this out
 (defvar *messages* nil)
-(defparameter *messages-limit* 10)
+(defparameter *messages-limit* 20)
 
 (defparameter *asset-intro* (read-lines "assets/intro" :omit-empty nil))
 (defparameter *asset-title* (read-lines "assets/title" :omit-empty t))
